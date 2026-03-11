@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tender Pulse Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Government Tender Discovery + Bid Tracking</p>
+        <h1>Tender Pulse Desk</h1>
+        <p class="hero-text">
+          Selected keywords ke basis par public government tenders dhundhiye, Excel-compatible export nikaliye,
+          aur shortlisted bids ka stage-wise management ek hi dashboard se kijiye.
+        </p>
+        <div class="hero-actions">
+          <button class="primary-button" type="button" data-scroll-target="#search-section">Tender Search</button>
+          <button class="ghost-button" type="button" data-scroll-target="#tracker-section">Bid Management</button>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="metric">
+          <span>Saved Keywords</span>
+          <strong id="savedKeywordCount">0</strong>
+        </div>
+        <div class="metric">
+          <span>Selected Bids</span>
+          <strong id="trackedBidCount">0</strong>
+        </div>
+        <div class="metric">
+          <span>Live Search Results</span>
+          <strong id="resultCount">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel" id="search-section">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Tender Search</p>
+            <h2>Keyword-based live tender discovery</h2>
+          </div>
+          <button class="secondary-button" id="exportResultsBtn" type="button">Search Results Excel</button>
+        </div>
+
+        <form id="searchForm" class="search-grid">
+          <label class="field">
+            <span>Keywords</span>
+            <textarea id="keywordInput" rows="4" placeholder="Jaise: solar, cctv, civil work, manpower"></textarea>
+            <small>Comma ya new line se multiple keywords likh sakte hain.</small>
+          </label>
+
+          <div class="field inline-field">
+            <span>Pages per keyword</span>
+            <select id="pageCountSelect">
+              <option value="1">1 page</option>
+              <option value="2" selected>2 pages</option>
+              <option value="3">3 pages</option>
+              <option value="4">4 pages</option>
+            </select>
+          </div>
+
+          <div class="field inline-field">
+            <span>Quick filters</span>
+            <div class="toggle-row">
+              <label><input id="closingSoonOnly" type="checkbox"> Closing within 14 days</label>
+              <label><input id="trackedOnly" type="checkbox"> Show only tracked bids</label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-button" type="submit" id="searchBtn">Search Tenders</button>
+            <button class="secondary-button" type="button" id="saveKeywordsBtn">Save Keywords</button>
+            <button class="ghost-button" type="button" id="loadKeywordsBtn">Load Saved</button>
+          </div>
+        </form>
+
+        <div class="status-row">
+          <p id="searchStatus">Abhi tak koi search nahi hui hai.</p>
+          <div class="chips" id="keywordChips"></div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Keyword</th>
+                <th>Title / Ref.</th>
+                <th>Organisation</th>
+                <th>Closing</th>
+                <th>Open</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr>
+                <td colspan="6" class="empty-state">Search results yahan dikhenge.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tracker-section">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Bid Management</p>
+            <h2>Selected bids ka stage-wise tracker</h2>
+          </div>
+          <button class="secondary-button" id="exportTrackerBtn" type="button">Bid Tracker Excel</button>
+        </div>
+
+        <div class="tracker-toolbar">
+          <label class="field inline-field">
+            <span>Stage filter</span>
+            <select id="stageFilter">
+              <option value="all">All Stages</option>
+            </select>
+          </label>
+          <label class="field inline-field">
+            <span>Search tracked bids</span>
+            <input id="trackerSearchInput" type="text" placeholder="Title, ref no, organisation">
+          </label>
+        </div>
+
+        <div id="trackerCards" class="tracker-grid">
+          <article class="tracker-empty">Abhi tak koi bid shortlist nahi hui hai.</article>
+        </div>
+      </section>
+
+      <section class="panel" id="history-section">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Track Record</p>
+            <h2>Har selected bid ka complete activity log</h2>
+          </div>
+          <button class="ghost-button" id="downloadBackupBtn" type="button">Backup JSON</button>
+        </div>
+
+        <div class="history-grid">
+          <aside class="history-list" id="historyBidList"></aside>
+          <div class="history-log" id="historyLog">
+            <p class="empty-state">Kisi tracked bid ko select kijiye.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="trackerCardTemplate">
+    <article class="tracker-card">
+      <div class="tracker-card-head">
+        <div>
+          <p class="tracker-title"></p>
+          <p class="tracker-meta"></p>
+        </div>
+        <button class="icon-button delete-track" type="button">Remove</button>
+      </div>
+      <div class="tracker-controls">
+        <label>
+          <span>Stage</span>
+          <select class="stage-select"></select>
+        </label>
+        <label>
+          <span>Priority</span>
+          <select class="priority-select">
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </label>
+      </div>
+      <div class="tracker-controls">
+        <label>
+          <span>Internal owner</span>
+          <input class="owner-input" type="text" placeholder="Jaise: Sales team">
+        </label>
+        <label>
+          <span>Submission due date</span>
+          <input class="due-date-input" type="date">
+        </label>
+      </div>
+      <label class="full-width">
+        <span>Notes</span>
+        <textarea class="notes-input" rows="3" placeholder="Document pending, EMD issue, client clarification..."></textarea>
+      </label>
+      <div class="tracker-card-actions">
+        <button class="secondary-button save-track" type="button">Save Update</button>
+        <button class="ghost-button view-history" type="button">View History</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
