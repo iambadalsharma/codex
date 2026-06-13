@@ -1,15 +1,17 @@
-# Tender Intelligence Portal
+# TenderEase Customer Portal
 
-Ye project government tender discovery + selected bid management ke liye banaya gaya hai.
+TenderEase ek simple customer-facing web portal hai jisme business owner sign up/login karke apne tenders, orders aur related document folders manage kar sakta hai.
 
-## Features
-- Keyword-based tender search (`/api/tenders`)
-- External API integration support (`TENDER_API_URL`, `TENDER_API_KEY`)
-- Excel export of tender results (`/api/tenders/export`)
-- Selected bid tracker with stage updates (`/api/bids`, `/api/bids/{id}/stage`)
-- Selected bid ka full track record/history (`/api/bids/{id}/history`)
-- Bid tracker Excel export (`/api/export/bids`)
-- Complete bid history database (`bid_history` table)
+## Current Scope
+- Public landing page: customer ko clearly dikhega ki service kya karti hai.
+- Login / Sign up: sign up par har customer ki unique ID banti hai.
+- Customer dashboard: live tenders, upcoming tenders, total filed tenders, missed tenders, working tenders, orders aur nearest due days.
+- Tender panel: manually tender add karna, PDF upload karke basic tender entry banana, due days calculate karna aur per-tender folder path create karna.
+- Order panel: GeM reference, contract, BG, courier, collection aur CRAC details track karna.
+- CSV export: Tender dashboard aur order dashboard Excel me open hone wali CSV file ke roop me download ho sakte hain.
+
+## Removed for now
+External government tender API integration abhi intentionally remove kar di gayi hai. Abhi flow point-to-point customer data entry aur management par focused hai.
 
 ## Run locally
 ```bash
@@ -21,21 +23,17 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 Open: `http://localhost:8000`
 
-## Free deployment (always-on guidance)
-True 24x7 "always on" free tier par generally possible nahi hota. Free plans usually sleep karte hain.
-Best options:
-1. **Railway** or **Render** free trial/credits -> easy deploy, but inactivity sleep ho sakta hai.
-2. **Fly.io** free allowance (region/usage dependent), better uptime but strict limits.
-3. **Oracle Cloud Always Free VM** (technical setup thoda advanced) -> yeh sabse close hai always-on free hosting ke liye.
+## Data folders
+Customer documents local `customer_data/` directory me save hote hain:
 
-### Render quick deploy
-1. GitHub repo push karo.
-2. Render Web Service create karo.
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
-5. Env vars set karo: `TENDER_API_URL`, `TENDER_API_KEY` (optional)
+```text
+customer_data/
+  CUST-XXXXXXXX/
+    tenders/<tender-number>/
+    orders/<gem-reference>/
+```
 
-## API integration notes
-- Agar official tender API available ho to uska URL `TENDER_API_URL` me do.
-- Service GET response ko normalized tender schema me map karti hai.
-- API unavailable hone par app sample data fallback use karti hai.
+## Deployment note
+Free hosting par true 24x7 always-on guarantee usually nahi hoti. Practical options:
+1. Oracle Cloud Always Free VM - always-on ke sabse close.
+2. Render / Railway / Fly.io - easy setup, lekin free plan me limits/sleeping ho sakta hai.
