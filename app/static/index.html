@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tender Intelligence Portal</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #f5f7fb; color: #1f2937; }
+    h1 { margin-top: 0; }
+    .card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    input, select, button { padding: 8px; margin: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 14px; }
+    th { background: #eef2ff; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  </style>
+</head>
+<body>
+  <h1>Government Tender & Bid Tracking Portal</h1>
+
+  <div class="card">
+    <h2>Tender Search (Keyword-based)</h2>
+    <div class="row">
+      <input id="keywords" placeholder="e.g. solar, health" size="40" />
+      <button onclick="loadTenders()">Search</button>
+      <button onclick="downloadTenderExcel()">Download Tender Excel</button>
+    </div>
+    <table id="tenderTable">
+      <thead>
+        <tr><th>ID</th><th>Title</th><th>Department</th><th>Value</th><th>Due Date</th><th>Action</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Selected Bid Management</h2>
+    <div class="row">
+      <select id="bidId" onchange="loadBidHistory()"></select>
+      <select id="stage">
+        <option>draft</option>
+        <option>documents_ready</option>
+        <option>submitted</option>
+        <option>technical_evaluation</option>
+        <option>financial_evaluation</option>
+        <option>awarded</option>
+        <option>lost</option>
+      </select>
+      <input id="comment" placeholder="Stage comment" size="30" />
+      <button onclick="updateStage()">Update Stage</button>
+      <button onclick="downloadBidExcel()">Download Bid Tracker Excel</button>
+    </div>
+    <table id="bidTable">
+      <thead>
+        <tr><th>Bid ID</th><th>Tender ID</th><th>Title</th><th>Stage</th><th>Due</th><th>Updated</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Selected Bid Track Record</h2>
+    <table id="historyTable">
+      <thead>
+        <tr><th>Stage</th><th>Comment</th><th>Changed At</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+const tenderCache = [];
+
+async function loadTenders() {
+  const keywords = document.getElementById('keywords').value;
+  const res = await fetch(`/api/tenders?keywords=${encodeURIComponent(keywords)}`);
+  const tenders = await res.json();
+  tenderCache.length = 0;
+  tenderCache.push(...tenders);
+
+  const body = document.querySelector('#tenderTable tbody');
+  body.innerHTML = '';
+  tenders.forEach((t, index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t.tender_id}</td><td>${t.title}</td><td>${t.department || ''}</td><td>${t.value || ''}</td><td>${t.due_date || ''}</td><td><button data-index="${index}">Add Bid</button></td>`;
+    tr.querySelector('button').addEventListener('click', () => selectTender(index));
+    body.appendChild(tr);
+  });
+}
+
+async function selectTender(index) {
+  const t = tenderCache[index];
+  await fetch('/api/bids', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      tender_id: t.tender_id,
+      title: t.title,
+      department: t.department,
+      value: t.value,
+      due_date: t.due_date,
+      stage: 'draft'
+    })
+  });
+  await loadBids();
+}
+
+async function loadBids() {
+  const res = await fetch('/api/bids');
+  const bids = await res.json();
+
+  const tbody = document.querySelector('#bidTable tbody');
+  const bidId = document.getElementById('bidId');
+  tbody.innerHTML = '';
+  bidId.innerHTML = '';
+
+  bids.forEach(b => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${b.id}</td><td>${b.tender_id}</td><td>${b.title}</td><td>${b.stage}</td><td>${b.due_date || ''}</td><td>${b.updated_at}</td>`;
+    tbody.appendChild(tr);
+
+    const option = document.createElement('option');
+    option.value = b.id;
+    option.textContent = `#${b.id} - ${b.title}`;
+    bidId.appendChild(option);
+  });
+
+  await loadBidHistory();
+}
+
+async function loadBidHistory() {
+  const bidId = document.getElementById('bidId').value;
+  const tbody = document.querySelector('#historyTable tbody');
+  tbody.innerHTML = '';
+  if (!bidId) return;
+
+  const res = await fetch(`/api/bids/${bidId}/history`);
+  const history = await res.json();
+  history.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${item.stage}</td><td>${item.comment || ''}</td><td>${item.changed_at}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function updateStage() {
+  const bidId = document.getElementById('bidId').value;
+  const stage = document.getElementById('stage').value;
+  const comment = document.getElementById('comment').value;
+  if (!bidId) return;
+  await fetch(`/api/bids/${bidId}/stage`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({stage, comment})
+  });
+  await loadBids();
+}
+
+function downloadTenderExcel() {
+  const keywords = document.getElementById('keywords').value;
+  window.open(`/api/tenders/export?keywords=${encodeURIComponent(keywords)}`, '_blank');
+}
+
+function downloadBidExcel() {
+  window.open('/api/export/bids', '_blank');
+}
+
+loadTenders();
+loadBids();
+</script>
+</body>
+</html>

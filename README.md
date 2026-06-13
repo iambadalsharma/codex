@@ -1,43 +1,41 @@
-# Tender Pulse Desk
+# Tender Intelligence Portal
 
-Yeh project ek lightweight tender discovery aur bid management dashboard hai jo public CPPP tender listings ko keyword ke basis par search karta hai.
+Ye project government tender discovery + selected bid management ke liye banaya gaya hai.
 
 ## Features
+- Keyword-based tender search (`/api/tenders`)
+- External API integration support (`TENDER_API_URL`, `TENDER_API_KEY`)
+- Excel export of tender results (`/api/tenders/export`)
+- Selected bid tracker with stage updates (`/api/bids`, `/api/bids/{id}/stage`)
+- Selected bid ka full track record/history (`/api/bids/{id}/history`)
+- Bid tracker Excel export (`/api/export/bids`)
+- Complete bid history database (`bid_history` table)
 
-- Multiple keywords ke saath live tender search
-- Excel-compatible CSV export for search results
-- Selected bids ke liye stage-wise management
-- Har tracked bid ka complete activity history
-- Browser local storage mein quick persistence
+## Run locally
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
 
-## Free Deployment Recommendation
+Open: `http://localhost:8000`
 
-`Cloudflare Pages` sabse practical free option hai kyunki:
+## Free deployment (always-on guidance)
+True 24x7 "always on" free tier par generally possible nahi hota. Free plans usually sleep karte hain.
+Best options:
+1. **Railway** or **Render** free trial/credits -> easy deploy, but inactivity sleep ho sakta hai.
+2. **Fly.io** free allowance (region/usage dependent), better uptime but strict limits.
+3. **Oracle Cloud Always Free VM** (technical setup thoda advanced) -> yeh sabse close hai always-on free hosting ke liye.
 
-- frontend globally available rehta hai
-- serverless functions sleep-based shared hosting jaisa behave nahi karte
-- static assets aur lightweight API proxy ek hi project mein deploy ho jata hai
+### Render quick deploy
+1. GitHub repo push karo.
+2. Render Web Service create karo.
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port 10000`
+5. Env vars set karo: `TENDER_API_URL`, `TENDER_API_KEY` (optional)
 
-Important: truly dedicated "24x7 private server" free plan par milna realistic nahi hota. Is app ka frontend hamesha accessible rahega, aur tender search request aane par serverless function turant run hoga.
-
-## Deploy Steps
-
-1. Is project ko GitHub repo mein push kijiye.
-2. Cloudflare Pages account mein login kijiye.
-3. `Create a project` -> `Connect to Git`.
-4. Apna repo select kijiye.
-5. Build settings mein:
-   - Framework preset: `None`
-   - Build command: blank
-   - Build output directory: `/`
-6. Deploy kijiye. `functions/api/tenders.js` automatically Pages Function ki tarah kaam karega.
-
-## Current Data Source
-
-- Public CPPP / ePublishing tender search page: [https://eprocure.gov.in/epublish/app](https://eprocure.gov.in/epublish/app)
-
-## Limitations
-
-- Source portal ki structure change hui to parsing update karni padegi.
-- Tracker abhi browser-local hai, isliye multi-user login/database included nahi hai.
-- Agar aap chahen to next phase mein login system + cloud database + reminders bhi add kiye ja sakte hain.
+## API integration notes
+- Agar official tender API available ho to uska URL `TENDER_API_URL` me do.
+- Service GET response ko normalized tender schema me map karti hai.
+- API unavailable hone par app sample data fallback use karti hai.
