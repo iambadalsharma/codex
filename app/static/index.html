@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TenderEase - Tender & Order Management</title>
+  <style>
+    :root { --blue:#2563eb; --dark:#172554; --muted:#64748b; --bg:#f8fafc; --green:#16a34a; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Arial, sans-serif; background:var(--bg); color:#0f172a; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:18px 28px; background:white; box-shadow:0 1px 8px #dbe3ef; position:sticky; top:0; z-index:2; }
+    .brand { font-weight:800; color:var(--dark); font-size:24px; }
+    button { border:0; border-radius:10px; padding:10px 14px; background:var(--blue); color:white; cursor:pointer; font-weight:700; }
+    button.secondary { background:#e0e7ff; color:var(--dark); }
+    button.green { background:var(--green); }
+    input, select, textarea { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:10px; margin:6px 0 10px; }
+    label { font-size:13px; color:#334155; font-weight:700; }
+    .hero { display:grid; grid-template-columns:1.2fr .8fr; gap:24px; padding:48px 28px; align-items:center; }
+    .hero h1 { font-size:42px; margin:0 0 12px; color:var(--dark); }
+    .hero p { color:var(--muted); font-size:18px; line-height:1.55; }
+    .card { background:white; border-radius:18px; padding:20px; box-shadow:0 4px 18px #dbe3ef; margin-bottom:18px; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+    .feature { background:white; padding:18px; border-radius:16px; box-shadow:0 2px 12px #e2e8f0; }
+    .feature b { display:block; margin-bottom:8px; color:var(--dark); }
+    .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:5; align-items:center; justify-content:center; padding:20px; }
+    .modal .box { width:min(520px, 100%); background:white; border-radius:18px; padding:22px; }
+    .hidden { display:none !important; }
+    .app { padding:24px; }
+    .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+    .stat { background:white; border-radius:16px; padding:16px; box-shadow:0 2px 12px #e2e8f0; }
+    .stat span { color:var(--muted); font-size:13px; }
+    .stat strong { display:block; margin-top:8px; font-size:24px; color:var(--dark); }
+    .tabs { display:flex; gap:8px; margin:20px 0; flex-wrap:wrap; }
+    table { width:100%; border-collapse:collapse; overflow:auto; }
+    th, td { border:1px solid #e2e8f0; padding:9px; font-size:13px; vertical-align:top; }
+    th { background:#eff6ff; text-align:left; color:#1e3a8a; }
+    .form-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .wide { grid-column:span 2; }
+    .folder { font-family:monospace; color:#475569; }
+    @media (max-width:900px){ .hero,.grid,.stats,.form-grid{grid-template-columns:1fr;} .hero h1{font-size:32px;} .wide{grid-column:span 1;} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">TenderEase</div>
+  <div>
+    <button class="secondary" onclick="openAuth('login')">Login</button>
+    <button onclick="openAuth('signup')">Sign up</button>
+  </div>
+</header>
+
+<main id="landing">
+  <section class="hero">
+    <div>
+      <h1>Tender aur orders ko simple dashboard me manage kariye</h1>
+      <p>Hum business owners ke liye tender filing, upcoming due dates, order status, BG tracking aur documents ko ek jagah par easy banaate hain. System aisa rakha gaya hai ki kam technical user bhi sign up ke baad khud data manage kar sake.</p>
+      <button onclick="openAuth('signup')">Free account banaiye</button>
+      <button class="secondary" onclick="openAuth('login')">Already customer? Login</button>
+    </div>
+    <div class="card">
+      <h2>Hum kya manage kar sakte hain?</h2>
+      <ul>
+        <li>Live, upcoming, filed aur missed tenders</li>
+        <li>Due days aur current tender stage</li>
+        <li>Order, contract, BG aur CRAC tracking</li>
+        <li>Har tender/order ke liye separate document folder</li>
+        <li>Single click dashboard Excel/CSV download</li>
+      </ul>
+    </div>
+  </section>
+  <section class="grid" style="padding:0 28px 36px">
+    <div class="feature"><b>Tender dashboard</b>Submission dates, pre-bid, EMD, value, quoted value aur result.</div>
+    <div class="feature"><b>Order panel</b>Contract, BG, courier, collection aur CRAC status tracking.</div>
+    <div class="feature"><b>Customer login</b>Har customer ki unique ID aur apna private data.</div>
+    <div class="feature"><b>Folders</b>Har tender/order ke documents ke liye auto folder path.</div>
+  </section>
+</main>
+
+<section id="dashboard" class="app hidden">
+  <div class="card">
+    <h2 id="welcome">Dashboard</h2>
+    <div class="stats">
+      <div class="stat"><span>Live Tender</span><strong id="live_tenders">0</strong></div>
+      <div class="stat"><span>Upcoming</span><strong id="upcoming_tenders">0</strong></div>
+      <div class="stat"><span>Total Filed</span><strong id="total_filed_tenders">0</strong></div>
+      <div class="stat"><span>Missed</span><strong id="missed_tenders">0</strong></div>
+      <div class="stat"><span>Working</span><strong id="working_tenders">0</strong></div>
+      <div class="stat"><span>Nearest Due Days</span><strong id="nearest_due_days">-</strong></div>
+    </div>
+    <div class="tabs">
+      <button onclick="showPanel('tenders')">Tenders</button>
+      <button class="secondary" onclick="showPanel('orders')">Orders</button>
+      <button class="green" onclick="downloadTenderSheet()">Tender Excel/CSV</button>
+      <button class="green" onclick="downloadOrderSheet()">Order Excel/CSV</button>
+    </div>
+  </div>
+
+  <div id="tendersPanel" class="card">
+    <h3>Add Tender</h3>
+    <div class="form-grid">
+      <input id="tender_number" placeholder="Tender Number" />
+      <input id="tender_title" placeholder="Tender Title" />
+      <input id="published_date" type="date" />
+      <input id="submission_end_date" type="date" />
+      <input id="pre_bid_date" type="date" />
+      <input id="pre_bid_location" placeholder="Pre-Bid Location" />
+      <select id="to_be_applied"><option>Review</option><option>Yes</option><option>No</option></select>
+      <select id="applied"><option>No</option><option>Yes</option></select>
+      <input id="organisation" placeholder="Organisation" />
+      <input id="location" placeholder="Location" />
+      <input id="emd_value" type="number" placeholder="EMD Value" />
+      <input id="tender_value" type="number" placeholder="Tender Value" />
+      <input id="quoted_value" type="number" placeholder="Our Quoted Value" />
+      <select id="current_status"><option>Upcoming</option><option>Live</option><option>Working</option><option>Filed</option><option>Missed</option><option>Won</option><option>Lost</option></select>
+      <input id="tender_link" placeholder="Tender Link" />
+      <textarea id="remarks" class="wide" placeholder="Remarks / reason for not applying"></textarea>
+    </div>
+    <button onclick="addTender()">Add Tender</button>
+    <label style="margin-left:12px">PDF se tender add karein</label><input style="max-width:320px;display:inline" id="tender_pdf" type="file" accept="application/pdf" /> <button class="secondary" onclick="uploadPdf()">Upload PDF</button>
+    <h3>Tender List</h3>
+    <div style="overflow:auto"><table id="tenderTable"><thead><tr><th>S.No</th><th>Remarks</th><th>Published</th><th>Submission End</th><th>Pre-Bid</th><th>To Apply?</th><th>Applied?</th><th>Due Days</th><th>Tender No</th><th>Title</th><th>Organisation</th><th>Location</th><th>EMD</th><th>Tender Value</th><th>Quoted</th><th>Status</th><th>Folder</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div id="ordersPanel" class="card hidden">
+    <h3>Add Order</h3>
+    <div class="form-grid">
+      <input id="gem_tender_reference" placeholder="GeM Tender Reference" />
+      <input id="tech_specs_reference" placeholder="Tech Specs / SoW Reference" />
+      <input id="category" placeholder="Category" />
+      <input id="contract_no" placeholder="Contract No" />
+      <input id="contract_date" type="date" />
+      <input id="order_organisation" placeholder="Organisation" />
+      <input id="order_location" placeholder="Location" />
+      <input id="total_order_value" type="number" placeholder="Total Order Value" />
+      <select id="order_status"><option>Generated</option><option>BG Pending</option><option>In Progress</option><option>Delivered</option><option>CRAC Pending</option><option>Closed</option></select>
+      <input id="bg_value" type="number" placeholder="BG Value" />
+      <input id="bg_number" placeholder="BG Number" />
+      <input id="bg_issue_date" type="date" />
+      <input id="bg_timeline" placeholder="Timeline of BG" />
+      <input id="bg_status" placeholder="BG Status" />
+      <select id="collected_or_not"><option>No</option><option>Yes</option></select>
+      <select id="couriered"><option>No</option><option>Yes</option></select>
+      <input id="crac_link" placeholder="CRAC Link" />
+      <textarea id="work" class="wide" placeholder="Work details"></textarea>
+    </div>
+    <button onclick="addOrder()">Add Order</button>
+    <h3>Order List</h3>
+    <div style="overflow:auto"><table id="orderTable"><thead><tr><th>S.No</th><th>GeM Ref</th><th>Category</th><th>Contract</th><th>Date</th><th>Organisation</th><th>Work</th><th>Value</th><th>Status</th><th>BG</th><th>Collected</th><th>Couriered</th><th>CRAC</th><th>Folder</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<div id="authModal" class="modal">
+  <div class="box">
+    <button class="secondary" style="float:right" onclick="closeAuth()">X</button>
+    <h2 id="authTitle">Login</h2>
+    <div id="signupFields" class="hidden">
+      <label>Business Name</label><input id="business_name" />
+      <label>Owner Name</label><input id="owner_name" />
+      <label>Phone</label><input id="phone" />
+    </div>
+    <label>Email</label><input id="email" type="email" />
+    <label>Password</label><input id="password" type="password" />
+    <button id="authSubmit" onclick="submitAuth()">Login</button>
+    <p id="authMessage"></p>
+  </div>
+</div>
+
+<script>
+let mode = 'login';
+let customer = JSON.parse(localStorage.getItem('customer') || 'null');
+const STORE_KEY = 'tenderease_static_data';
+
+function getStore(){
+  return JSON.parse(localStorage.getItem(STORE_KEY) || '{"customers":[],"tenders":[],"orders":[]}');
+}
+function saveStore(store){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+function uid(){ return Math.random().toString(16).slice(2, 10).toUpperCase(); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function dueDays(dateValue){
+  if(!dateValue) return null;
+  const end = new Date(dateValue + 'T00:00:00');
+  if(Number.isNaN(end.getTime())) return null;
+  const now = new Date(today() + 'T00:00:00');
+  return Math.ceil((end - now) / 86400000);
+}
+async function api(path, options){
+  const res = await fetch(path, options);
+  if(!res.ok) throw new Error((await res.json()).detail || 'API error');
+  return res.json();
+}
+
+if (customer) enterDashboard();
+
+function openAuth(nextMode){ mode = nextMode; document.getElementById('authModal').style.display='flex'; document.getElementById('authTitle').textContent = mode === 'signup' ? 'Sign up' : 'Login'; document.getElementById('authSubmit').textContent = mode === 'signup' ? 'Create Account' : 'Login'; document.getElementById('signupFields').classList.toggle('hidden', mode !== 'signup'); }
+function closeAuth(){ document.getElementById('authModal').style.display='none'; }
+async function submitAuth(){
+  const payload = { email: email.value, password: password.value };
+  if(mode === 'signup'){ payload.business_name = business_name.value; payload.owner_name = owner_name.value; payload.phone = phone.value; }
+  try {
+    customer = await api(mode === 'signup' ? '/api/auth/signup' : '/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  } catch (err) {
+    const store = getStore();
+    if(mode === 'signup'){
+      if(store.customers.some(c => c.email === payload.email)){ authMessage.textContent = 'Email already registered'; return; }
+      customer = { id: Date.now(), customer_uid: `CUST-${uid()}`, created_at: new Date().toISOString(), ...payload };
+      store.customers.push(customer); saveStore(store);
+    } else {
+      customer = store.customers.find(c => c.email === payload.email && c.password === payload.password);
+      if(!customer){ authMessage.textContent = 'Invalid email or password'; return; }
+    }
+  }
+  localStorage.setItem('customer', JSON.stringify(customer)); closeAuth(); enterDashboard();
+}
+function enterDashboard(){ landing.classList.add('hidden'); dashboard.classList.remove('hidden'); welcome.textContent = `Welcome, ${customer.business_name} (${customer.customer_uid})`; refreshAll(); }
+function showPanel(panel){ tendersPanel.classList.toggle('hidden', panel !== 'tenders'); ordersPanel.classList.toggle('hidden', panel !== 'orders'); }
+async function refreshAll(){ await loadStats(); await loadTenders(); await loadOrders(); }
+async function loadStats(){
+  let d;
+  try { d = await api(`/api/customers/${customer.id}/dashboard`); }
+  catch (err) {
+    const store = getStore();
+    const tenders = store.tenders.filter(t => t.customer_id === customer.id);
+    const orders = store.orders.filter(o => o.customer_id === customer.id);
+    const due = tenders.map(t => dueDays(t.submission_end_date)).filter(v => v !== null);
+    d = {
+      live_tenders: tenders.filter(t => ['live','working'].includes((t.current_status || '').toLowerCase())).length,
+      upcoming_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'upcoming').length,
+      total_filed_tenders: tenders.filter(t => (t.applied || '').toLowerCase() === 'yes').length,
+      missed_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'missed').length,
+      working_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'working').length,
+      nearest_due_days: due.length ? Math.min(...due) : null,
+    };
+  }
+  ['live_tenders','upcoming_tenders','total_filed_tenders','missed_tenders','working_tenders','nearest_due_days'].forEach(k => document.getElementById(k).textContent = d[k] ?? '-');
+}
+async function addTender(){
+  const payload = { tender_number:tender_number.value, tender_title:tender_title.value, published_date:published_date.value, submission_end_date:submission_end_date.value, pre_bid_date:pre_bid_date.value, pre_bid_location:pre_bid_location.value, to_be_applied:to_be_applied.value, applied:applied.value, organisation:organisation.value, location:location.value, emd_value:+emd_value.value||0, tender_value:+tender_value.value||0, quoted_value:+quoted_value.value||0, current_status:current_status.value, tender_link:tender_link.value, remarks:remarks.value, not_applying_reason:remarks.value };
+  try { await api(`/api/customers/${customer.id}/tenders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) {
+    const store = getStore();
+    store.tenders.push({ id: Date.now(), customer_id: customer.id, due_days: dueDays(payload.submission_end_date), folder_path: `customer_data/${customer.customer_uid}/tenders/${payload.tender_number}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...payload });
+    saveStore(store);
+  }
+  refreshAll();
+}
+async function uploadPdf(){
+  const file = tender_pdf.files[0]; if(!file) return;
+  const form = new FormData(); form.append('pdf', file);
+  try { await fetch(`/api/customers/${customer.id}/tenders/import-pdf`, {method:'POST', body:form}); }
+  catch (err) {
+    const tenderNumber = file.name.replace(/\.pdf$/i, '');
+    const store = getStore();
+    store.tenders.push({ id: Date.now(), customer_id: customer.id, tender_number:tenderNumber, tender_title:`PDF Imported Tender - ${tenderNumber}`, current_status:'Review', applied:'No', to_be_applied:'Review', due_days:null, folder_path:`customer_data/${customer.customer_uid}/tenders/${tenderNumber}`, created_at:new Date().toISOString(), updated_at:new Date().toISOString() });
+    saveStore(store);
+  }
+  refreshAll();
+}
+async function loadTenders(){
+  let rows;
+  try { rows = await api(`/api/customers/${customer.id}/tenders`); }
+  catch (err) { rows = getStore().tenders.filter(t => t.customer_id === customer.id).map(t => ({...t, due_days: dueDays(t.submission_end_date)})); }
+  tenderTable.querySelector('tbody').innerHTML = rows.map((t,i)=>`<tr><td>${i+1}</td><td>${t.remarks||''}</td><td>${t.published_date||''}</td><td>${t.submission_end_date||''}</td><td>${t.pre_bid_date||''}</td><td>${t.to_be_applied}</td><td>${t.applied}</td><td>${t.due_days ?? ''}</td><td>${t.tender_number}</td><td>${t.tender_title}</td><td>${t.organisation||''}</td><td>${t.location||''}</td><td>${t.emd_value||0}</td><td>${t.tender_value||0}</td><td>${t.quoted_value||0}</td><td>${t.current_status}</td><td class="folder">${t.folder_path||''}</td></tr>`).join('');
+}
+async function addOrder(){
+  const payload = { gem_tender_reference:gem_tender_reference.value, tech_specs_reference:tech_specs_reference.value, category:category.value, contract_no:contract_no.value, contract_date:contract_date.value, organisation:order_organisation.value, location:order_location.value, total_order_value:+total_order_value.value||0, order_status:order_status.value, bg_value:+bg_value.value||0, bg_number:bg_number.value, bg_issue_date:bg_issue_date.value, bg_timeline:bg_timeline.value, bg_status:bg_status.value, collected_or_not:collected_or_not.value, couriered:couriered.value, crac_link:crac_link.value, work:work.value };
+  try { await api(`/api/customers/${customer.id}/orders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) {
+    const store = getStore();
+    store.orders.push({ id: Date.now(), customer_id: customer.id, folder_path:`customer_data/${customer.customer_uid}/orders/${payload.gem_tender_reference}`, created_at:new Date().toISOString(), updated_at:new Date().toISOString(), ...payload });
+    saveStore(store);
+  }
+  refreshAll();
+}
+async function loadOrders(){
+  let rows;
+  try { rows = await api(`/api/customers/${customer.id}/orders`); }
+  catch (err) { rows = getStore().orders.filter(o => o.customer_id === customer.id); }
+  orderTable.querySelector('tbody').innerHTML = rows.map((o,i)=>`<tr><td>${i+1}</td><td>${o.gem_tender_reference}</td><td>${o.category||''}</td><td>${o.contract_no||''}</td><td>${o.contract_date||''}</td><td>${o.organisation||''}</td><td>${o.work||''}</td><td>${o.total_order_value}</td><td>${o.order_status}</td><td>${o.bg_number||''}</td><td>${o.collected_or_not}</td><td>${o.couriered}</td><td>${o.crac_link||''}</td><td class="folder">${o.folder_path||''}</td></tr>`).join('');
+}
+function downloadCsv(filename, rows){
+  if(!rows.length) return;
+  const columns = Object.keys(rows[0]);
+  const csv = [columns.join(','), ...rows.map(row => columns.map(col => `"${String(row[col] ?? '').replaceAll('"','""')}"`).join(','))].join('\n');
+  const url = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+}
+function downloadTenderSheet(){
+  if(location.hostname && !location.hostname.includes('localhost')) return downloadCsv('tender-dashboard.csv', getStore().tenders.filter(t => t.customer_id === customer.id));
+  window.open(`/api/customers/${customer.id}/tenders/export`, '_blank');
+}
+function downloadOrderSheet(){
+  if(location.hostname && !location.hostname.includes('localhost')) return downloadCsv('orders-dashboard.csv', getStore().orders.filter(o => o.customer_id === customer.id));
+  window.open(`/api/customers/${customer.id}/orders/export`, '_blank');
+}
+</script>
+</body>
+</html>
