@@ -10,10 +10,25 @@ TenderEase ek simple customer-facing web portal hai jisme business owner sign up
 - Order panel: GeM reference, contract, BG, courier, collection aur CRAC details track karna.
 - CSV export: Tender dashboard aur order dashboard Excel me open hone wali CSV file ke roop me download ho sakte hain.
 
-## Removed for now
-External government tender API integration abhi intentionally remove kar di gayi hai. Abhi flow point-to-point customer data entry aur management par focused hai.
+## Cloudflare live deployment
+Previous Cloudflare website ko update karne ke liye `app/static` folder deploy karna hai. Static version browser `localStorage` use karta hai, isliye Cloudflare Pages par backend ke bina bhi UI live chalega.
 
-## Run locally
+### Cloudflare Pages settings
+- Framework preset: **None**
+- Build command: blank / none
+- Build output directory: `app/static`
+- SPA redirect file: `app/static/_redirects`
+
+### Wrangler deploy
+```bash
+npx wrangler pages deploy app/static --project-name=tenderease
+```
+
+Agar existing Cloudflare project ka naam alag hai to `--project-name` me wahi naam use karein.
+
+## Backend/local mode
+FastAPI backend abhi local/demo ke liye available hai. Local mode me SQLite DB aur `customer_data/` folders use hote hain.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -23,7 +38,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 Open: `http://localhost:8000`
 
-## Data folders
+## Data folders in backend mode
 Customer documents local `customer_data/` directory me save hote hain:
 
 ```text
@@ -33,7 +48,5 @@ customer_data/
     orders/<gem-reference>/
 ```
 
-## Deployment note
-Free hosting par true 24x7 always-on guarantee usually nahi hoti. Practical options:
-1. Oracle Cloud Always Free VM - always-on ke sabse close.
-2. Render / Railway / Fly.io - easy setup, lekin free plan me limits/sleeping ho sakta hai.
+## Removed for now
+External government tender API integration abhi intentionally remove kar di gayi hai. Abhi flow point-to-point customer data entry aur management par focused hai.

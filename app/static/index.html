@@ -168,6 +168,27 @@
 <script>
 let mode = 'login';
 let customer = JSON.parse(localStorage.getItem('customer') || 'null');
+const STORE_KEY = 'tenderease_static_data';
+
+function getStore(){
+  return JSON.parse(localStorage.getItem(STORE_KEY) || '{"customers":[],"tenders":[],"orders":[]}');
+}
+function saveStore(store){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+function uid(){ return Math.random().toString(16).slice(2, 10).toUpperCase(); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function dueDays(dateValue){
+  if(!dateValue) return null;
+  const end = new Date(dateValue + 'T00:00:00');
+  if(Number.isNaN(end.getTime())) return null;
+  const now = new Date(today() + 'T00:00:00');
+  return Math.ceil((end - now) / 86400000);
+}
+async function api(path, options){
+  const res = await fetch(path, options);
+  if(!res.ok) throw new Error((await res.json()).detail || 'API error');
+  return res.json();
+}
+
 if (customer) enterDashboard();
 
 function openAuth(nextMode){ mode = nextMode; document.getElementById('authModal').style.display='flex'; document.getElementById('authTitle').textContent = mode === 'signup' ? 'Sign up' : 'Login'; document.getElementById('authSubmit').textContent = mode === 'signup' ? 'Create Account' : 'Login'; document.getElementById('signupFields').classList.toggle('hidden', mode !== 'signup'); }
@@ -175,24 +196,102 @@ function closeAuth(){ document.getElementById('authModal').style.display='none';
 async function submitAuth(){
   const payload = { email: email.value, password: password.value };
   if(mode === 'signup'){ payload.business_name = business_name.value; payload.owner_name = owner_name.value; payload.phone = phone.value; }
-  const res = await fetch(mode === 'signup' ? '/api/auth/signup' : '/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-  if(!res.ok){ authMessage.textContent = (await res.json()).detail || 'Error'; return; }
-  customer = await res.json(); localStorage.setItem('customer', JSON.stringify(customer)); closeAuth(); enterDashboard();
+  try {
+    customer = await api(mode === 'signup' ? '/api/auth/signup' : '/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  } catch (err) {
+    const store = getStore();
+    if(mode === 'signup'){
+      if(store.customers.some(c => c.email === payload.email)){ authMessage.textContent = 'Email already registered'; return; }
+      customer = { id: Date.now(), customer_uid: `CUST-${uid()}`, created_at: new Date().toISOString(), ...payload };
+      store.customers.push(customer); saveStore(store);
+    } else {
+      customer = store.customers.find(c => c.email === payload.email && c.password === payload.password);
+      if(!customer){ authMessage.textContent = 'Invalid email or password'; return; }
+    }
+  }
+  localStorage.setItem('customer', JSON.stringify(customer)); closeAuth(); enterDashboard();
 }
 function enterDashboard(){ landing.classList.add('hidden'); dashboard.classList.remove('hidden'); welcome.textContent = `Welcome, ${customer.business_name} (${customer.customer_uid})`; refreshAll(); }
 function showPanel(panel){ tendersPanel.classList.toggle('hidden', panel !== 'tenders'); ordersPanel.classList.toggle('hidden', panel !== 'orders'); }
 async function refreshAll(){ await loadStats(); await loadTenders(); await loadOrders(); }
-async function loadStats(){ const d = await (await fetch(`/api/customers/${customer.id}/dashboard`)).json(); ['live_tenders','upcoming_tenders','total_filed_tenders','missed_tenders','working_tenders','nearest_due_days'].forEach(k => document.getElementById(k).textContent = d[k] ?? '-'); }
+async function loadStats(){
+  let d;
+  try { d = await api(`/api/customers/${customer.id}/dashboard`); }
+  catch (err) {
+    const store = getStore();
+    const tenders = store.tenders.filter(t => t.customer_id === customer.id);
+    const orders = store.orders.filter(o => o.customer_id === customer.id);
+    const due = tenders.map(t => dueDays(t.submission_end_date)).filter(v => v !== null);
+    d = {
+      live_tenders: tenders.filter(t => ['live','working'].includes((t.current_status || '').toLowerCase())).length,
+      upcoming_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'upcoming').length,
+      total_filed_tenders: tenders.filter(t => (t.applied || '').toLowerCase() === 'yes').length,
+      missed_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'missed').length,
+      working_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'working').length,
+      nearest_due_days: due.length ? Math.min(...due) : null,
+    };
+  }
+  ['live_tenders','upcoming_tenders','total_filed_tenders','missed_tenders','working_tenders','nearest_due_days'].forEach(k => document.getElementById(k).textContent = d[k] ?? '-');
+}
 async function addTender(){
   const payload = { tender_number:tender_number.value, tender_title:tender_title.value, published_date:published_date.value, submission_end_date:submission_end_date.value, pre_bid_date:pre_bid_date.value, pre_bid_location:pre_bid_location.value, to_be_applied:to_be_applied.value, applied:applied.value, organisation:organisation.value, location:location.value, emd_value:+emd_value.value||0, tender_value:+tender_value.value||0, quoted_value:+quoted_value.value||0, current_status:current_status.value, tender_link:tender_link.value, remarks:remarks.value, not_applying_reason:remarks.value };
-  await fetch(`/api/customers/${customer.id}/tenders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); refreshAll();
+  try { await api(`/api/customers/${customer.id}/tenders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) {
+    const store = getStore();
+    store.tenders.push({ id: Date.now(), customer_id: customer.id, due_days: dueDays(payload.submission_end_date), folder_path: `customer_data/${customer.customer_uid}/tenders/${payload.tender_number}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...payload });
+    saveStore(store);
+  }
+  refreshAll();
 }
-async function uploadPdf(){ const file = tender_pdf.files[0]; if(!file) return; const form = new FormData(); form.append('pdf', file); await fetch(`/api/customers/${customer.id}/tenders/import-pdf`, {method:'POST', body:form}); refreshAll(); }
-async function loadTenders(){ const rows = await (await fetch(`/api/customers/${customer.id}/tenders`)).json(); tenderTable.querySelector('tbody').innerHTML = rows.map((t,i)=>`<tr><td>${i+1}</td><td>${t.remarks||''}</td><td>${t.published_date||''}</td><td>${t.submission_end_date||''}</td><td>${t.pre_bid_date||''}</td><td>${t.to_be_applied}</td><td>${t.applied}</td><td>${t.due_days ?? ''}</td><td>${t.tender_number}</td><td>${t.tender_title}</td><td>${t.organisation||''}</td><td>${t.location||''}</td><td>${t.emd_value}</td><td>${t.tender_value}</td><td>${t.quoted_value}</td><td>${t.current_status}</td><td class="folder">${t.folder_path||''}</td></tr>`).join(''); }
-async function addOrder(){ const payload = { gem_tender_reference:gem_tender_reference.value, tech_specs_reference:tech_specs_reference.value, category:category.value, contract_no:contract_no.value, contract_date:contract_date.value, organisation:order_organisation.value, location:order_location.value, total_order_value:+total_order_value.value||0, order_status:order_status.value, bg_value:+bg_value.value||0, bg_number:bg_number.value, bg_issue_date:bg_issue_date.value, bg_timeline:bg_timeline.value, bg_status:bg_status.value, collected_or_not:collected_or_not.value, couriered:couriered.value, crac_link:crac_link.value, work:work.value }; await fetch(`/api/customers/${customer.id}/orders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); refreshAll(); }
-async function loadOrders(){ const rows = await (await fetch(`/api/customers/${customer.id}/orders`)).json(); orderTable.querySelector('tbody').innerHTML = rows.map((o,i)=>`<tr><td>${i+1}</td><td>${o.gem_tender_reference}</td><td>${o.category||''}</td><td>${o.contract_no||''}</td><td>${o.contract_date||''}</td><td>${o.organisation||''}</td><td>${o.work||''}</td><td>${o.total_order_value}</td><td>${o.order_status}</td><td>${o.bg_number||''}</td><td>${o.collected_or_not}</td><td>${o.couriered}</td><td>${o.crac_link||''}</td><td class="folder">${o.folder_path||''}</td></tr>`).join(''); }
-function downloadTenderSheet(){ window.open(`/api/customers/${customer.id}/tenders/export`, '_blank'); }
-function downloadOrderSheet(){ window.open(`/api/customers/${customer.id}/orders/export`, '_blank'); }
+async function uploadPdf(){
+  const file = tender_pdf.files[0]; if(!file) return;
+  const form = new FormData(); form.append('pdf', file);
+  try { await fetch(`/api/customers/${customer.id}/tenders/import-pdf`, {method:'POST', body:form}); }
+  catch (err) {
+    const tenderNumber = file.name.replace(/\.pdf$/i, '');
+    const store = getStore();
+    store.tenders.push({ id: Date.now(), customer_id: customer.id, tender_number:tenderNumber, tender_title:`PDF Imported Tender - ${tenderNumber}`, current_status:'Review', applied:'No', to_be_applied:'Review', due_days:null, folder_path:`customer_data/${customer.customer_uid}/tenders/${tenderNumber}`, created_at:new Date().toISOString(), updated_at:new Date().toISOString() });
+    saveStore(store);
+  }
+  refreshAll();
+}
+async function loadTenders(){
+  let rows;
+  try { rows = await api(`/api/customers/${customer.id}/tenders`); }
+  catch (err) { rows = getStore().tenders.filter(t => t.customer_id === customer.id).map(t => ({...t, due_days: dueDays(t.submission_end_date)})); }
+  tenderTable.querySelector('tbody').innerHTML = rows.map((t,i)=>`<tr><td>${i+1}</td><td>${t.remarks||''}</td><td>${t.published_date||''}</td><td>${t.submission_end_date||''}</td><td>${t.pre_bid_date||''}</td><td>${t.to_be_applied}</td><td>${t.applied}</td><td>${t.due_days ?? ''}</td><td>${t.tender_number}</td><td>${t.tender_title}</td><td>${t.organisation||''}</td><td>${t.location||''}</td><td>${t.emd_value||0}</td><td>${t.tender_value||0}</td><td>${t.quoted_value||0}</td><td>${t.current_status}</td><td class="folder">${t.folder_path||''}</td></tr>`).join('');
+}
+async function addOrder(){
+  const payload = { gem_tender_reference:gem_tender_reference.value, tech_specs_reference:tech_specs_reference.value, category:category.value, contract_no:contract_no.value, contract_date:contract_date.value, organisation:order_organisation.value, location:order_location.value, total_order_value:+total_order_value.value||0, order_status:order_status.value, bg_value:+bg_value.value||0, bg_number:bg_number.value, bg_issue_date:bg_issue_date.value, bg_timeline:bg_timeline.value, bg_status:bg_status.value, collected_or_not:collected_or_not.value, couriered:couriered.value, crac_link:crac_link.value, work:work.value };
+  try { await api(`/api/customers/${customer.id}/orders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) {
+    const store = getStore();
+    store.orders.push({ id: Date.now(), customer_id: customer.id, folder_path:`customer_data/${customer.customer_uid}/orders/${payload.gem_tender_reference}`, created_at:new Date().toISOString(), updated_at:new Date().toISOString(), ...payload });
+    saveStore(store);
+  }
+  refreshAll();
+}
+async function loadOrders(){
+  let rows;
+  try { rows = await api(`/api/customers/${customer.id}/orders`); }
+  catch (err) { rows = getStore().orders.filter(o => o.customer_id === customer.id); }
+  orderTable.querySelector('tbody').innerHTML = rows.map((o,i)=>`<tr><td>${i+1}</td><td>${o.gem_tender_reference}</td><td>${o.category||''}</td><td>${o.contract_no||''}</td><td>${o.contract_date||''}</td><td>${o.organisation||''}</td><td>${o.work||''}</td><td>${o.total_order_value}</td><td>${o.order_status}</td><td>${o.bg_number||''}</td><td>${o.collected_or_not}</td><td>${o.couriered}</td><td>${o.crac_link||''}</td><td class="folder">${o.folder_path||''}</td></tr>`).join('');
+}
+function downloadCsv(filename, rows){
+  if(!rows.length) return;
+  const columns = Object.keys(rows[0]);
+  const csv = [columns.join(','), ...rows.map(row => columns.map(col => `"${String(row[col] ?? '').replaceAll('"','""')}"`).join(','))].join('\n');
+  const url = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+}
+function downloadTenderSheet(){
+  if(location.hostname && !location.hostname.includes('localhost')) return downloadCsv('tender-dashboard.csv', getStore().tenders.filter(t => t.customer_id === customer.id));
+  window.open(`/api/customers/${customer.id}/tenders/export`, '_blank');
+}
+function downloadOrderSheet(){
+  if(location.hostname && !location.hostname.includes('localhost')) return downloadCsv('orders-dashboard.csv', getStore().orders.filter(o => o.customer_id === customer.id));
+  window.open(`/api/customers/${customer.id}/orders/export`, '_blank');
+}
 </script>
 </body>
 </html>
