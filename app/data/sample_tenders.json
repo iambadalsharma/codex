@@ -1,0 +1,26 @@
+[
+  {
+    "tender_id": "GOV-001",
+    "title": "Solar Street Light Installation",
+    "department": "Urban Development",
+    "value": "INR 2.5 Cr",
+    "due_date": "2026-04-15",
+    "url": "https://example.gov/tenders/gov-001"
+  },
+  {
+    "tender_id": "GOV-002",
+    "title": "Road Repair and Maintenance Zone 3",
+    "department": "Public Works Department",
+    "value": "INR 11 Cr",
+    "due_date": "2026-04-05",
+    "url": "https://example.gov/tenders/gov-002"
+  },
+  {
+    "tender_id": "GOV-003",
+    "title": "Hospital Medical Equipment Procurement",
+    "department": "Health Department",
+    "value": "INR 7.2 Cr",
+    "due_date": "2026-05-02",
+    "url": "https://example.gov/tenders/gov-003"
+  }
+]
