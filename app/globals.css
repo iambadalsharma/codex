@@ -1,0 +1,430 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8fb;
+  --foreground: #18181b;
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-strong: rgba(255, 255, 255, 0.76);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-line: rgba(39, 39, 42, 0.1);
+  --glass-text: #121826;
+  --glass-muted: #5f6674;
+  --glass-shadow: 0 18px 60px rgba(20, 37, 63, 0.13);
+  --glass-glow: 0 0 0 1px rgba(255, 255, 255, 0.72),
+    0 16px 42px rgba(56, 189, 248, 0.12);
+  --accent: #0f8f6d;
+  --accent-2: #2563eb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-noto-sans);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto-sans), sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+a,
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main > section,
+main article {
+  animation: fade-up 360ms ease both;
+}
+
+.ios-shell {
+  --background: #eef4fb;
+  --foreground: var(--glass-text);
+  --glass-bg: rgba(255, 255, 255, 0.56);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-line: rgba(24, 24, 27, 0.1);
+  --glass-text: #111827;
+  --glass-muted: #586174;
+  --glass-shadow: 0 18px 60px rgba(14, 30, 54, 0.15);
+  --glass-glow: 0 0 0 1px rgba(255, 255, 255, 0.72),
+    0 18px 44px rgba(37, 99, 235, 0.13);
+  --accent: #07866a;
+  --accent-2: #2563eb;
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(224, 247, 255, 0.58) 38%, rgba(236, 253, 245, 0.62) 68%, rgba(248, 250, 252, 0.92)),
+    repeating-linear-gradient(90deg, rgba(15, 23, 42, 0.026) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(0deg, rgba(15, 23, 42, 0.022) 0 1px, transparent 1px 96px);
+  color: var(--glass-text);
+  font-size: 0.92rem;
+}
+
+.ios-shell[data-theme="dark"] {
+  --background: #08111f;
+  --foreground: #edf6ff;
+  --glass-bg: rgba(15, 23, 42, 0.54);
+  --glass-strong: rgba(15, 23, 42, 0.76);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-line: rgba(226, 232, 240, 0.12);
+  --glass-text: #f8fbff;
+  --glass-muted: #a8b3c7;
+  --glass-shadow: 0 18px 70px rgba(0, 0, 0, 0.38);
+  --glass-glow: 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 18px 54px rgba(45, 212, 191, 0.13);
+  --accent: #34d399;
+  --accent-2: #60a5fa;
+  background:
+    linear-gradient(135deg, rgba(6, 12, 24, 0.98), rgba(13, 28, 51, 0.94) 42%, rgba(6, 40, 48, 0.92) 72%, rgba(9, 14, 24, 0.98)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 96px);
+}
+
+.ios-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(115deg, rgba(16, 185, 129, 0.18), transparent 32%),
+    linear-gradient(245deg, rgba(37, 99, 235, 0.16), transparent 34%),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.36), transparent 46%);
+  pointer-events: none;
+}
+
+.ios-shell[data-theme="dark"]::before {
+  background:
+    linear-gradient(115deg, rgba(52, 211, 153, 0.14), transparent 34%),
+    linear-gradient(245deg, rgba(96, 165, 250, 0.14), transparent 36%),
+    linear-gradient(0deg, rgba(15, 23, 42, 0.2), transparent 48%);
+}
+
+.ios-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0)),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 12px);
+  mix-blend-mode: soft-light;
+}
+
+.glass-nav,
+.glass-panel,
+.ios-shell :where(article, section.rounded-lg, aside, nav, form, .overflow-hidden.rounded-lg) {
+  border: 1px solid var(--glass-border) !important;
+  background: var(--glass-bg) !important;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(22px) saturate(1.45);
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+}
+
+.glass-nav {
+  background: var(--glass-strong) !important;
+  box-shadow: 0 10px 34px rgba(15, 23, 42, 0.1);
+}
+
+.glass-panel {
+  background: var(--glass-strong) !important;
+}
+
+.auth-overlay {
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-strong: rgba(255, 255, 255, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-line: rgba(24, 24, 27, 0.1);
+  --glass-text: #111827;
+  --glass-muted: #586174;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 80 !important;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.34);
+  color: var(--glass-text);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+.auth-overlay[data-theme="dark"] {
+  --glass-bg: rgba(15, 23, 42, 0.58);
+  --glass-strong: rgba(15, 23, 42, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-line: rgba(226, 232, 240, 0.12);
+  --glass-text: #f8fbff;
+  --glass-muted: #a8b3c7;
+  background: rgba(2, 6, 23, 0.64);
+}
+
+.auth-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(16, 185, 129, 0.28), transparent 28%),
+    radial-gradient(circle at 84% 24%, rgba(37, 99, 235, 0.2), transparent 30%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent 52%);
+}
+
+.auth-drawer {
+  position: relative;
+  z-index: 1;
+  border-left: 1px solid var(--glass-border) !important;
+  color: var(--glass-text);
+}
+
+.auth-overlay .border,
+.auth-overlay .border-b {
+  border-color: var(--glass-line) !important;
+}
+
+.auth-overlay .text-zinc-950,
+.auth-overlay .text-zinc-900,
+.auth-overlay .text-zinc-800,
+.auth-overlay .text-zinc-700 {
+  color: var(--glass-text) !important;
+}
+
+.auth-overlay .text-zinc-600,
+.auth-overlay .text-zinc-500 {
+  color: var(--glass-muted) !important;
+}
+
+.auth-overlay .bg-zinc-950 {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  color: #ffffff !important;
+}
+
+.glass-button,
+.ios-shell button,
+.ios-shell a.rounded-md {
+  border-color: var(--glass-border) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.glass-button:hover,
+.ios-shell button:hover,
+.ios-shell a.rounded-md:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--glass-glow);
+}
+
+.ios-shell .bg-white,
+.ios-shell .bg-white\/95,
+.ios-shell .bg-zinc-50,
+.ios-shell .bg-zinc-100,
+.ios-shell .bg-emerald-50 {
+  background: var(--glass-bg) !important;
+}
+
+.ios-shell .bg-zinc-950,
+.ios-shell .bg-emerald-700 {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+}
+
+.ios-shell .border,
+.ios-shell .border-b,
+.ios-shell .border-y,
+.ios-shell .divide-y > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--glass-line) !important;
+}
+
+.ios-shell .rounded-lg,
+.ios-shell .rounded-md {
+  border-radius: 10px !important;
+}
+
+.ios-shell .text-zinc-950,
+.ios-shell .text-zinc-900,
+.ios-shell .text-zinc-800,
+.ios-shell .text-zinc-700 {
+  color: var(--glass-text) !important;
+}
+
+.ios-shell .text-zinc-600,
+.ios-shell .text-zinc-500 {
+  color: var(--glass-muted) !important;
+}
+
+.ios-shell .text-emerald-700 {
+  color: var(--accent) !important;
+}
+
+.ios-shell .text-blue-700,
+.ios-shell .text-indigo-700 {
+  color: var(--accent-2) !important;
+}
+
+.ios-shell h1 {
+  font-size: clamp(2rem, 3.5vw, 3.7rem) !important;
+  line-height: 1.02 !important;
+}
+
+.ios-shell h2 {
+  font-size: 1.35rem !important;
+  line-height: 1.16 !important;
+}
+
+.ios-shell h3 {
+  font-size: 1rem !important;
+}
+
+.ios-shell p,
+.ios-shell td,
+.ios-shell th,
+.ios-shell input,
+.ios-shell button,
+.ios-shell a,
+.ios-shell dt,
+.ios-shell dd,
+.ios-shell span {
+  letter-spacing: 0 !important;
+}
+
+.ios-shell .text-lg {
+  font-size: 1rem !important;
+  line-height: 1.55 !important;
+}
+
+.ios-shell .text-sm {
+  font-size: 0.82rem !important;
+}
+
+.ios-shell .text-xs {
+  font-size: 0.72rem !important;
+}
+
+.ios-shell .text-2xl {
+  font-size: 1.35rem !important;
+}
+
+.ios-shell .text-3xl {
+  font-size: 1.65rem !important;
+}
+
+.ios-shell :where(.p-5) {
+  padding: 1rem !important;
+}
+
+.ios-shell :where(.p-4) {
+  padding: 0.82rem !important;
+}
+
+.ios-shell :where(.py-10) {
+  padding-top: 2rem !important;
+  padding-bottom: 2rem !important;
+}
+
+.ios-shell :where(.gap-8) {
+  gap: 1.4rem !important;
+}
+
+.ios-shell :where(.gap-6) {
+  gap: 1rem !important;
+}
+
+.ios-shell :where(.gap-4) {
+  gap: 0.72rem !important;
+}
+
+.ios-shell input {
+  min-height: 2.45rem;
+  color: var(--glass-text) !important;
+  background: rgba(255, 255, 255, 0.42) !important;
+  border-color: var(--glass-line) !important;
+}
+
+.ios-shell[data-theme="dark"] input {
+  background: rgba(15, 23, 42, 0.34) !important;
+}
+
+.ios-shell table {
+  min-width: 1760px !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.78rem;
+}
+
+.ios-shell th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.55rem 0.65rem !important;
+  color: var(--glass-text) !important;
+  background: var(--glass-strong) !important;
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+}
+
+.ios-shell td {
+  padding: 0.52rem 0.65rem !important;
+  color: var(--glass-muted) !important;
+}
+
+.ios-shell tbody {
+  background: transparent !important;
+}
+
+.ios-shell tr:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+}
+
+.ios-shell[data-theme="dark"] tr:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.ios-shell .shadow-2xl {
+  box-shadow: var(--glass-shadow) !important;
+}
+
+@media (max-width: 760px) {
+  html {
+    font-size: 13px;
+  }
+
+  .ios-shell h1 {
+    font-size: 2.05rem !important;
+  }
+}
