@@ -1,0 +1,9 @@
+name = "tenderease"
+pages_build_output_dir = "app/static"
+compatibility_date = "2026-06-13"
+
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tenderease-db"
+database_id = "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID"
