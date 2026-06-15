@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   AlertCircle,
@@ -46,12 +46,15 @@ import {
   type OrderRow,
   type TenderRow,
 } from "@/lib/tender-data";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 type Language = "en" | "hi";
 type Theme = "light" | "dark";
 type PublicPage = "home" | "features" | "growth" | "pricing" | "resources";
 type ViewKey = "dashboard" | "tenders" | "orders" | "folders" | "analysis" | "alerts" | "team";
 type AuthMode = "login" | "signup";
+type AuthMethod = "email" | "phone";
 
 type IconType = typeof LayoutDashboard;
 
@@ -445,24 +448,146 @@ function AuthDrawer({
   onSubmit: (profile: CustomerProfile) => void;
 }) {
   const t = c(language);
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("email");
+  const [otpSent, setOtpSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const [authError, setAuthError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function saveCustomerProfile(profile: CustomerProfile, userId: string) {
+    const { error } = await supabase.from("customers").upsert({
+      id: userId,
+      customer_id: profile.customerId,
+      owner_name: profile.ownerName,
+      business_name: profile.businessName,
+      phone: profile.phone,
+      email: profile.email,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.warn("Customer profile was not saved yet. Run the Supabase SQL setup first.", error.message);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setAuthError("");
+    setAuthMessage("");
+    setIsSubmitting(true);
+
     const formData = new FormData(event.currentTarget);
     const ownerName = String(formData.get("ownerName") || demoCustomer.ownerName);
     const businessName = String(formData.get("businessName") || demoCustomer.businessName);
+    const phone = String(formData.get("phone") || demoCustomer.phone).trim();
+    const email = String(formData.get("email") || demoCustomer.email).trim();
+    const password = String(formData.get("password") || "").trim();
+    const otp = String(formData.get("otp") || "").trim();
     const customerId =
       mode === "signup"
         ? makeCustomerId(ownerName, businessName)
         : String(formData.get("customerId") || demoCustomer.customerId).trim();
 
-    onSubmit({
+    const profile = {
       customerId: customerId || demoCustomer.customerId,
       ownerName,
       businessName,
-      phone: String(formData.get("phone") || demoCustomer.phone),
-      email: String(formData.get("email") || demoCustomer.email),
-    });
+      phone,
+      email,
+    };
+
+    try {
+      if (authMethod === "phone") {
+        const formattedPhone = phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`;
+
+        if (!otpSent) {
+          const { error } = await supabase.auth.signInWithOtp({
+            phone: formattedPhone,
+            options: {
+              data: {
+                business_name: businessName,
+                customer_id: profile.customerId,
+                owner_name: ownerName,
+              },
+            },
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          setOtpSent(true);
+          setAuthMessage(
+            language === "hi"
+              ? "OTP bhej diya gaya hai. Code daal kar login complete karein."
+              : "OTP sent. Enter the code to complete login."
+          );
+          return;
+        }
+
+        const { data, error } = await supabase.auth.verifyOtp({
+          phone: formattedPhone,
+          token: otp,
+          type: "sms",
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.user) {
+          await saveCustomerProfile(profile, data.user.id);
+        }
+      } else if (mode === "signup") {
+        if (!password || password.length < 6) {
+          throw new Error("Password must be at least 6 characters.");
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              business_name: businessName,
+              customer_id: profile.customerId,
+              owner_name: ownerName,
+              phone,
+            },
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.user) {
+          await saveCustomerProfile(profile, data.user.id);
+        }
+      } else {
+        if (!password) {
+          throw new Error("Enter your password to login.");
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.user) {
+          await saveCustomerProfile(profile, data.user.id);
+        }
+      }
+
+      onSubmit(profile);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Authentication failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -513,6 +638,37 @@ function AuthDrawer({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
+          <div className="grid grid-cols-2 rounded-md border border-zinc-200 bg-white/40 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod("email");
+                setOtpSent(false);
+                setAuthError("");
+                setAuthMessage("");
+              }}
+              className={`rounded-md px-3 py-2 text-xs font-semibold ${
+                authMethod === "email" ? "bg-zinc-950 text-white" : "text-zinc-700"
+              }`}
+            >
+              Email password
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod("phone");
+                setOtpSent(false);
+                setAuthError("");
+                setAuthMessage("");
+              }}
+              className={`rounded-md px-3 py-2 text-xs font-semibold ${
+                authMethod === "phone" ? "bg-zinc-950 text-white" : "text-zinc-700"
+              }`}
+            >
+              Mobile OTP
+            </button>
+          </div>
+
           {mode === "login" ? (
             <label className="space-y-2">
               <span className="text-sm font-semibold text-zinc-700">{t.customerId}</span>
@@ -557,10 +713,38 @@ function AuthDrawer({
                 name="email"
                 type="email"
                 placeholder="owner@example.com"
+                required={authMethod === "email"}
                 className="h-12 w-full rounded-md border border-zinc-300 px-3 text-zinc-950 outline-none focus:border-zinc-950"
               />
             </label>
           </div>
+
+          {authMethod === "email" ? (
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-zinc-700">Password</span>
+              <input
+                name="password"
+                type="password"
+                minLength={mode === "signup" ? 6 : undefined}
+                placeholder={mode === "signup" ? "Create 6+ character password" : "Enter password"}
+                required
+                className="h-12 w-full rounded-md border border-zinc-300 px-3 text-zinc-950 outline-none focus:border-zinc-950"
+              />
+            </label>
+          ) : null}
+
+          {authMethod === "phone" && otpSent ? (
+            <label className="space-y-2">
+              <span className="text-sm font-semibold text-zinc-700">OTP code</span>
+              <input
+                name="otp"
+                inputMode="numeric"
+                placeholder="123456"
+                required
+                className="h-12 w-full rounded-md border border-zinc-300 px-3 text-zinc-950 outline-none focus:border-zinc-950"
+              />
+            </label>
+          ) : null}
 
           {mode === "signup" ? (
             <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800">
@@ -570,17 +754,50 @@ function AuthDrawer({
             </div>
           ) : null}
 
+          {authMessage ? (
+            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-800">
+              {authMessage}
+            </div>
+          ) : null}
+
+          {authError ? (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+              {authError}
+            </div>
+          ) : null}
+
           <button
             type="submit"
+            disabled={isSubmitting}
             className="mt-auto inline-flex h-12 items-center justify-center gap-2 rounded-md bg-zinc-950 px-5 text-base font-semibold text-white hover:bg-zinc-800"
           >
             {mode === "signup" ? <UserPlus className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
-            {mode === "signup" ? t.createId : t.openDashboard}
+            {isSubmitting
+              ? "Please wait..."
+              : authMethod === "phone" && !otpSent
+                ? "Send OTP"
+                : mode === "signup"
+                  ? t.createId
+                  : t.openDashboard}
           </button>
         </form>
       </div>
     </div>
   );
+}
+
+function profileFromSupabaseUser(user: User): CustomerProfile {
+  const metadata = user.user_metadata;
+  const ownerName = String(metadata.owner_name || demoCustomer.ownerName);
+  const businessName = String(metadata.business_name || demoCustomer.businessName);
+
+  return {
+    customerId: String(metadata.customer_id || makeCustomerId(ownerName, businessName)),
+    ownerName,
+    businessName,
+    phone: user.phone || String(metadata.phone || demoCustomer.phone),
+    email: user.email || String(metadata.email || demoCustomer.email),
+  };
 }
 
 function PublicHome({
@@ -1694,6 +1911,27 @@ export function CustomerPortal() {
   const [language, setLanguage] = useState<Language>("en");
   const [theme, setTheme] = useState<Theme>("light");
 
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (isMounted && data.user) {
+        setCustomer(profileFromSupabaseUser(data.user));
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCustomer(session?.user ? profileFromSupabaseUser(session.user) : null);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   function openAuth(mode: AuthMode) {
     setAuthMode(mode);
     setAuthOpen(true);
@@ -1716,7 +1954,10 @@ export function CustomerPortal() {
           theme={theme}
           onLanguageToggle={toggleLanguage}
           onThemeToggle={toggleTheme}
-          onLogout={() => setCustomer(null)}
+          onLogout={() => {
+            void supabase.auth.signOut();
+            setCustomer(null);
+          }}
         />
       ) : (
         <PublicHome

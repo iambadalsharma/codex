@@ -4,7 +4,7 @@ A Sites-ready customer portal for:
 
 - showing customers what tender and order work the service manages
 - opening a login/sign up panel
-- generating a demo customer ID on sign up
+- authenticating customers with Supabase email/password or mobile OTP
 - showing a customer-wise tender and order dashboard
 - switching the public site and dashboard between English and Hindi
 - exporting dashboard data to Excel from the browser
@@ -15,6 +15,7 @@ A Sites-ready customer portal for:
 
 - `vinext` + Next.js app router
 - Cloudflare Worker-compatible Sites output
+- Supabase Auth and database setup for customer data
 - Cloudflare D1 schema scaffolded in `db/schema.ts`
 - Browser-side Excel export via `xlsx`
 
@@ -39,7 +40,8 @@ npm run db:generate
 - Public pages cover home, features, growth analysis, plans, and resources.
 - English/Hindi language toggle is available in the upper corner and stays active after login.
 - Login or sign up opens from the side drawer.
-- Sign up creates a demo unique customer ID.
+- Sign up creates a unique customer ID and authenticates through Supabase.
+- Login supports email/password and mobile OTP.
 - Dashboard shows live, upcoming, working, filed, and missed tender counts.
 - Tenders can be added by tender number and optional PDF upload.
 - Each tender gets a separate folder path.
@@ -47,13 +49,27 @@ npm run db:generate
 - Analysis shows pipeline value, fit score, quote gap, competitor signals, and recommended actions.
 - Alerts and team views show due-date, BG, EMD, pre-bid, and task follow-up items.
 
-## Persistence shape
+## Supabase setup
 
-`.openai/hosting.json` now declares D1 as `DB`. The schema includes:
+This app is connected to Supabase project `https://qoebcbrbbdusczbcchse.supabase.co` using the publishable browser key in `lib/supabase.ts`.
+
+To activate real customer storage:
+
+1. Open Supabase dashboard.
+2. Go to SQL Editor.
+3. Run `supabase/schema.sql`.
+4. Go to Authentication > Providers and keep Email enabled.
+5. For mobile OTP, configure a phone/SMS provider in Supabase Auth. The UI already calls Supabase OTP, but SMS delivery will only work after provider setup.
+
+The Supabase schema includes:
 
 - `customers`
-- `customer_tenders`
-- `customer_orders`
-- `tender_files`
+- `tenders`
+- `orders`
+- `files`
 
-That gives the next build a durable place to store real customer accounts, tender records, order records, and file links.
+Row Level Security is enabled so logged-in customers can access only their own data.
+
+## Cloudflare/D1 note
+
+`.openai/hosting.json` still declares D1 as `DB` for future Cloudflare-native storage, but the active customer auth path is now Supabase.
