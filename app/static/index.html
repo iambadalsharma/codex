@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TenderEase - Tender Growth Platform</title>
+  <style>
+    :root { --blue:#2563eb; --dark:#172554; --muted:#64748b; --bg:#f8fafc; --green:#16a34a; --orange:#f97316; --purple:#7c3aed; --red:#dc2626; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: Arial, sans-serif; background:var(--bg); color:#0f172a; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:14px; padding:16px 28px; background:white; box-shadow:0 1px 8px #dbe3ef; position:sticky; top:0; z-index:2; }
+    .brand { font-weight:800; color:var(--dark); font-size:24px; }
+    nav { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    nav a { color:#334155; text-decoration:none; font-weight:700; font-size:14px; }
+    button { border:0; border-radius:10px; padding:10px 14px; background:var(--blue); color:white; cursor:pointer; font-weight:700; }
+    button.secondary { background:#e0e7ff; color:var(--dark); }
+    button.green { background:var(--green); }
+    button.orange { background:var(--orange); }
+    .lang-toggle { display:flex; gap:5px; padding:4px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; }
+    .lang-toggle button { padding:7px 10px; background:transparent; color:#475569; }
+    .lang-toggle button.active { background:var(--dark); color:white; }
+    input, select, textarea { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:10px; margin:6px 0 10px; }
+    label { font-size:13px; color:#334155; font-weight:700; }
+    .hero { display:grid; grid-template-columns:1.15fr .85fr; gap:24px; padding:54px 28px 30px; align-items:center; }
+    .hero h1 { font-size:46px; line-height:1.08; margin:0 0 12px; color:var(--dark); }
+    .hero p { color:var(--muted); font-size:18px; line-height:1.6; }
+    .badge { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:8px 12px; background:#dbeafe; color:#1e3a8a; font-weight:800; margin-bottom:14px; }
+    .card { background:white; border-radius:18px; padding:20px; box-shadow:0 4px 18px #dbe3ef; margin-bottom:18px; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .feature { background:white; padding:18px; border-radius:16px; box-shadow:0 2px 12px #e2e8f0; }
+    .feature b { display:block; margin-bottom:8px; color:var(--dark); }
+    .metric-pill { display:flex; justify-content:space-between; gap:12px; padding:13px; border-radius:14px; background:#f1f5f9; margin:8px 0; }
+    .section { padding:24px 28px; }
+    .section h2 { color:var(--dark); font-size:30px; margin:0 0 12px; }
+    .timeline { display:grid; gap:12px; }
+    .step { display:flex; gap:14px; align-items:flex-start; }
+    .step span { min-width:32px; height:32px; border-radius:50%; background:#dbeafe; color:#1e3a8a; display:grid; place-items:center; font-weight:900; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:5; align-items:center; justify-content:center; padding:20px; }
+    .modal .box { width:min(520px, 100%); background:white; border-radius:18px; padding:22px; }
+    .hidden { display:none !important; }
+    .app { padding:24px; }
+    .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; }
+    .stat { background:white; border-radius:16px; padding:16px; box-shadow:0 2px 12px #e2e8f0; }
+    .stat span { color:var(--muted); font-size:13px; }
+    .stat strong { display:block; margin-top:8px; font-size:24px; color:var(--dark); }
+    .tabs { display:flex; gap:8px; margin:20px 0; flex-wrap:wrap; }
+    table { width:100%; border-collapse:collapse; overflow:auto; }
+    th, td { border:1px solid #e2e8f0; padding:9px; font-size:13px; vertical-align:top; }
+    th { background:#eff6ff; text-align:left; color:#1e3a8a; }
+    .form-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .wide { grid-column:span 2; }
+    .folder { font-family:monospace; color:#475569; }
+    .insight { border-left:5px solid var(--blue); background:#f8fbff; padding:12px; border-radius:12px; margin:8px 0; }
+    .risk-high { border-left-color:var(--red); }
+    .risk-medium { border-left-color:var(--orange); }
+    .risk-good { border-left-color:var(--green); }
+    @media (max-width:980px){ header{align-items:flex-start; flex-direction:column;} .hero,.grid,.grid-3,.stats,.form-grid{grid-template-columns:1fr;} .hero h1{font-size:34px;} .wide{grid-column:span 1;} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">TenderEase</div>
+  <nav id="topNav">
+    <a href="#features" data-i18n="navFeatures">Features</a>
+    <a href="#growth" data-i18n="navGrowth">Growth Plan</a>
+    <a href="#pricing" data-i18n="navPricing">Pricing</a>
+    <a href="#faq" data-i18n="navFaq">FAQ</a>
+  </nav>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+    <div class="lang-toggle" aria-label="Language selector">
+      <button id="langHi" class="active" onclick="setLanguage('hi')">हिंदी</button>
+      <button id="langEn" onclick="setLanguage('en')">English</button>
+    </div>
+    <button class="secondary" onclick="openAuth('login')" data-i18n="login">Login</button>
+    <button onclick="openAuth('signup')" data-i18n="signup">Sign up</button>
+  </div>
+</header>
+
+<main id="landing">
+  <section class="hero">
+    <div>
+      <div class="badge" data-i18n="badge">Tender Growth OS for MSMEs</div>
+      <h1 data-i18n="heroTitle">Tender aur orders ko simple growth dashboard me manage kariye</h1>
+      <p data-i18n="heroText">TenderEase aapko tender pipeline, due dates, eligibility, order delivery, BG status aur business growth analytics ek jagah deta hai—taaki owner aur team dono bina confusion ke kaam kar sakein.</p>
+      <button onclick="openAuth('signup')" data-i18n="heroCta">Free account banaiye</button>
+      <button class="secondary" onclick="openAuth('login')" data-i18n="heroLogin">Already customer? Login</button>
+    </div>
+    <div class="card">
+      <h2 data-i18n="scoreTitle">Growth Score Preview</h2>
+      <div class="metric-pill"><b data-i18n="pipelineLabel">Pipeline Value</b><span>₹ 0</span></div>
+      <div class="metric-pill"><b data-i18n="dueLabel">Nearest Due</b><span data-i18n="notAdded">Not added</span></div>
+      <div class="metric-pill"><b data-i18n="riskLabel">Risk Alerts</b><span data-i18n="autoAfterLogin">Auto after login</span></div>
+      <p data-i18n="scoreHelp">Dashboard tender value, bid load, missed risk aur order pending ka instant summary banata hai.</p>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <h2 data-i18n="featuresTitle">Business owner ke liye clear modules</h2>
+    <div class="grid">
+      <div class="feature"><b data-i18n="feature1Title">Tender CRM</b><span data-i18n="feature1Text">Live, upcoming, filed, missed, won/lost tenders ka one-screen view.</span></div>
+      <div class="feature"><b data-i18n="feature2Title">Due-date control</b><span data-i18n="feature2Text">7 din ke andar due tenders aur missed risk ko highlight karta hai.</span></div>
+      <div class="feature"><b data-i18n="feature3Title">Order execution</b><span data-i18n="feature3Text">Contract, BG, courier, collection aur CRAC tracking ek jagah.</span></div>
+      <div class="feature"><b data-i18n="feature4Title">Team folders</b><span data-i18n="feature4Text">Har tender/order ka auto folder path, taaki documents scattered na rahen.</span></div>
+    </div>
+  </section>
+
+  <section id="growth" class="section">
+    <h2 data-i18n="growthTitle">Tender growth playbook</h2>
+    <div class="grid-3">
+      <div class="card"><h3 data-i18n="growth1Title">1. Discover</h3><p data-i18n="growth1Text">Manual/PDF entry se pipeline banao, location aur organisation wise opportunities track karo.</p></div>
+      <div class="card"><h3 data-i18n="growth2Title">2. Qualify</h3><p data-i18n="growth2Text">EMD, tender value, due days aur reasons for not applying se decision fast karo.</p></div>
+      <div class="card"><h3 data-i18n="growth3Title">3. Execute</h3><p data-i18n="growth3Text">Won tender ko order panel me convert karke BG, delivery aur CRAC close karo.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 data-i18n="workflowTitle">Simple workflow</h2>
+    <div class="card timeline">
+      <div class="step"><span>1</span><div><b data-i18n="wf1Title">Sign up</b><p data-i18n="wf1Text">Customer ID banegi aur aapka private dashboard open hoga.</p></div></div>
+      <div class="step"><span>2</span><div><b data-i18n="wf2Title">Tender add karein</b><p data-i18n="wf2Text">Tender number, due date, value, status ya PDF upload karein.</p></div></div>
+      <div class="step"><span>3</span><div><b data-i18n="wf3Title">Analytics dekhein</b><p data-i18n="wf3Text">Pipeline value, urgent due, conversion aur missed tender risk auto calculate hoga.</p></div></div>
+      <div class="step"><span>4</span><div><b data-i18n="wf4Title">Order close karein</b><p data-i18n="wf4Text">Contract se CRAC tak sab status update karke team ko aligned rakhein.</p></div></div>
+    </div>
+  </section>
+
+  <section id="pricing" class="section">
+    <h2 data-i18n="pricingTitle">Starter-friendly plans</h2>
+    <div class="grid-3">
+      <div class="card"><h3 data-i18n="plan1">Starter</h3><p data-i18n="plan1Text">Self-managed dashboard and CSV export.</p></div>
+      <div class="card"><h3 data-i18n="plan2">Growth</h3><p data-i18n="plan2Text">Team tracking, tender review and weekly pipeline call.</p></div>
+      <div class="card"><h3 data-i18n="plan3">Managed</h3><p data-i18n="plan3Text">Tender filing support, order follow-up and document checklist.</p></div>
+    </div>
+  </section>
+
+  <section id="faq" class="section">
+    <h2 data-i18n="faqTitle">Common questions</h2>
+    <div class="card">
+      <p><b data-i18n="faq1Q">Kya ye Cloudflare par chalega?</b><br><span data-i18n="faq1A">Haan, static mode me localStorage fallback ke saath chalega.</span></p>
+      <p><b data-i18n="faq2Q">Kya data multi-device sync hoga?</b><br><span data-i18n="faq2A">Static mode me nahi. Sync ke liye backend/database connect karna hoga.</span></p>
+    </div>
+  </section>
+</main>
+
+<section id="dashboard" class="app hidden">
+  <div class="card">
+    <h2 id="welcome">Dashboard</h2>
+    <div class="stats">
+      <div class="stat"><span data-i18n="statLive">Live Tender</span><strong id="live_tenders">0</strong></div>
+      <div class="stat"><span data-i18n="statUpcoming">Upcoming</span><strong id="upcoming_tenders">0</strong></div>
+      <div class="stat"><span data-i18n="statFiled">Total Filed</span><strong id="total_filed_tenders">0</strong></div>
+      <div class="stat"><span data-i18n="statMissed">Missed</span><strong id="missed_tenders">0</strong></div>
+      <div class="stat"><span data-i18n="statPipeline">Pipeline Value</span><strong id="pipeline_value">₹0</strong></div>
+      <div class="stat"><span data-i18n="statDue">Nearest Due Days</span><strong id="nearest_due_days">-</strong></div>
+    </div>
+    <div class="tabs">
+      <button onclick="showPanel('insights')" data-i18n="tabInsights">Insights</button>
+      <button onclick="showPanel('tenders')" data-i18n="tabTenders">Tenders</button>
+      <button class="secondary" onclick="showPanel('orders')" data-i18n="tabOrders">Orders</button>
+      <button class="green" onclick="downloadTenderSheet()" data-i18n="downloadTender">Tender Excel/CSV</button>
+      <button class="green" onclick="downloadOrderSheet()" data-i18n="downloadOrder">Order Excel/CSV</button>
+    </div>
+  </div>
+
+  <div id="insightsPanel" class="card">
+    <h3 data-i18n="insightsTitle">Action insights</h3>
+    <div id="insightList"></div>
+    <div class="grid-3">
+      <div class="feature"><b data-i18n="winRateTitle">Win-rate helper</b><span id="winRate">0%</span></div>
+      <div class="feature"><b data-i18n="avgValueTitle">Average tender value</b><span id="avgTenderValue">₹0</span></div>
+      <div class="feature"><b data-i18n="orderPendingTitle">Pending order value</b><span id="pendingOrderValue">₹0</span></div>
+    </div>
+  </div>
+
+  <div id="tendersPanel" class="card hidden">
+    <h3 data-i18n="addTenderTitle">Add Tender</h3>
+    <div class="form-grid">
+      <input id="tender_number" placeholder="Tender Number" />
+      <input id="tender_title" placeholder="Tender Title" />
+      <input id="published_date" type="date" />
+      <input id="submission_end_date" type="date" />
+      <input id="pre_bid_date" type="date" />
+      <input id="pre_bid_location" placeholder="Pre-Bid Location" />
+      <select id="to_be_applied"><option>Review</option><option>Yes</option><option>No</option></select>
+      <select id="applied"><option>No</option><option>Yes</option></select>
+      <input id="organisation" placeholder="Organisation" />
+      <input id="location" placeholder="Location" />
+      <input id="emd_value" type="number" placeholder="EMD Value" />
+      <input id="tender_value" type="number" placeholder="Tender Value" />
+      <input id="quoted_value" type="number" placeholder="Our Quoted Value" />
+      <select id="current_status"><option>Upcoming</option><option>Live</option><option>Working</option><option>Filed</option><option>Missed</option><option>Won</option><option>Lost</option></select>
+      <input id="tender_link" placeholder="Tender Link" />
+      <textarea id="remarks" class="wide" placeholder="Remarks / reason for not applying"></textarea>
+    </div>
+    <button onclick="addTender()" data-i18n="addTenderBtn">Add Tender</button>
+    <label style="margin-left:12px" data-i18n="pdfLabel">PDF se tender add karein</label><input style="max-width:320px;display:inline" id="tender_pdf" type="file" accept="application/pdf" /> <button class="secondary" onclick="uploadPdf()" data-i18n="uploadPdf">Upload PDF</button>
+    <h3 data-i18n="tenderListTitle">Tender List</h3>
+    <div style="overflow:auto"><table id="tenderTable"><thead><tr><th>S.No</th><th>Remarks</th><th>Published</th><th>Submission End</th><th>Pre-Bid</th><th>To Apply?</th><th>Applied?</th><th>Due Days</th><th>Tender No</th><th>Title</th><th>Organisation</th><th>Location</th><th>EMD</th><th>Tender Value</th><th>Quoted</th><th>Status</th><th>Folder</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div id="ordersPanel" class="card hidden">
+    <h3 data-i18n="addOrderTitle">Add Order</h3>
+    <div class="form-grid">
+      <input id="gem_tender_reference" placeholder="GeM Tender Reference" />
+      <input id="tech_specs_reference" placeholder="Tech Specs / SoW Reference" />
+      <input id="category" placeholder="Category" />
+      <input id="contract_no" placeholder="Contract No" />
+      <input id="contract_date" type="date" />
+      <input id="order_organisation" placeholder="Organisation" />
+      <input id="order_location" placeholder="Location" />
+      <input id="total_order_value" type="number" placeholder="Total Order Value" />
+      <select id="order_status"><option>Generated</option><option>BG Pending</option><option>In Progress</option><option>Delivered</option><option>CRAC Pending</option><option>Closed</option></select>
+      <input id="bg_value" type="number" placeholder="BG Value" />
+      <input id="bg_number" placeholder="BG Number" />
+      <input id="bg_issue_date" type="date" />
+      <input id="bg_timeline" placeholder="Timeline of BG" />
+      <input id="bg_status" placeholder="BG Status" />
+      <select id="collected_or_not"><option>No</option><option>Yes</option></select>
+      <select id="couriered"><option>No</option><option>Yes</option></select>
+      <input id="crac_link" placeholder="CRAC Link" />
+      <textarea id="work" class="wide" placeholder="Work details"></textarea>
+    </div>
+    <button onclick="addOrder()" data-i18n="addOrderBtn">Add Order</button>
+    <h3 data-i18n="orderListTitle">Order List</h3>
+    <div style="overflow:auto"><table id="orderTable"><thead><tr><th>S.No</th><th>GeM Ref</th><th>Category</th><th>Contract</th><th>Date</th><th>Organisation</th><th>Work</th><th>Value</th><th>Status</th><th>BG</th><th>Collected</th><th>Couriered</th><th>CRAC</th><th>Folder</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</section>
+
+<div id="authModal" class="modal">
+  <div class="box">
+    <button class="secondary" style="float:right" onclick="closeAuth()">X</button>
+    <h2 id="authTitle">Login</h2>
+    <div id="signupFields" class="hidden">
+      <label data-i18n="businessName">Business Name</label><input id="business_name" />
+      <label data-i18n="ownerName">Owner Name</label><input id="owner_name" />
+      <label data-i18n="phone">Phone</label><input id="phone" />
+    </div>
+    <label>Email</label><input id="email" type="email" />
+    <label>Password</label><input id="password" type="password" />
+    <button id="authSubmit" onclick="submitAuth()">Login</button>
+    <p id="authMessage"></p>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  hi: {
+    navFeatures:'Features', navGrowth:'Growth Plan', navPricing:'Pricing', navFaq:'FAQ', login:'Login', signup:'Sign up',
+    badge:'MSME ke liye Tender Growth OS', heroTitle:'Tender aur orders ko simple growth dashboard me manage kariye', heroText:'TenderEase aapko tender pipeline, due dates, eligibility, order delivery, BG status aur business growth analytics ek jagah deta hai—taaki owner aur team dono bina confusion ke kaam kar sakein.', heroCta:'Free account banaiye', heroLogin:'Already customer? Login',
+    scoreTitle:'Growth Score Preview', pipelineLabel:'Pipeline Value', dueLabel:'Nearest Due', notAdded:'Not added', riskLabel:'Risk Alerts', autoAfterLogin:'Auto after login', scoreHelp:'Dashboard tender value, bid load, missed risk aur order pending ka instant summary banata hai.',
+    featuresTitle:'Business owner ke liye clear modules', feature1Title:'Tender CRM', feature1Text:'Live, upcoming, filed, missed, won/lost tenders ka one-screen view.', feature2Title:'Due-date control', feature2Text:'7 din ke andar due tenders aur missed risk ko highlight karta hai.', feature3Title:'Order execution', feature3Text:'Contract, BG, courier, collection aur CRAC tracking ek jagah.', feature4Title:'Team folders', feature4Text:'Har tender/order ka auto folder path, taaki documents scattered na rahen.',
+    growthTitle:'Tender growth playbook', growth1Title:'1. Discover', growth1Text:'Manual/PDF entry se pipeline banao, location aur organisation wise opportunities track karo.', growth2Title:'2. Qualify', growth2Text:'EMD, tender value, due days aur reasons for not applying se decision fast karo.', growth3Title:'3. Execute', growth3Text:'Won tender ko order panel me convert karke BG, delivery aur CRAC close karo.',
+    workflowTitle:'Simple workflow', wf1Title:'Sign up', wf1Text:'Customer ID banegi aur aapka private dashboard open hoga.', wf2Title:'Tender add karein', wf2Text:'Tender number, due date, value, status ya PDF upload karein.', wf3Title:'Analytics dekhein', wf3Text:'Pipeline value, urgent due, conversion aur missed tender risk auto calculate hoga.', wf4Title:'Order close karein', wf4Text:'Contract se CRAC tak sab status update karke team ko aligned rakhein.',
+    pricingTitle:'Starter-friendly plans', plan1:'Starter', plan1Text:'Self-managed dashboard and CSV export.', plan2:'Growth', plan2Text:'Team tracking, tender review and weekly pipeline call.', plan3:'Managed', plan3Text:'Tender filing support, order follow-up and document checklist.', faqTitle:'Common questions', faq1Q:'Kya ye Cloudflare par chalega?', faq1A:'Haan, static mode me localStorage fallback ke saath chalega.', faq2Q:'Kya data multi-device sync hoga?', faq2A:'Static mode me nahi. Sync ke liye backend/database connect karna hoga.',
+    statLive:'Live Tender', statUpcoming:'Upcoming', statFiled:'Total Filed', statMissed:'Missed', statPipeline:'Pipeline Value', statDue:'Nearest Due Days', tabInsights:'Insights', tabTenders:'Tenders', tabOrders:'Orders', downloadTender:'Tender Excel/CSV', downloadOrder:'Order Excel/CSV', insightsTitle:'Action insights', winRateTitle:'Win-rate helper', avgValueTitle:'Average tender value', orderPendingTitle:'Pending order value', addTenderTitle:'Add Tender', addTenderBtn:'Add Tender', pdfLabel:'PDF se tender add karein', uploadPdf:'Upload PDF', tenderListTitle:'Tender List', addOrderTitle:'Add Order', addOrderBtn:'Add Order', orderListTitle:'Order List', businessName:'Business Name', ownerName:'Owner Name', phone:'Phone', emptyInsight:'Abhi data add nahi hai. Pehla tender add karke analytics dekhein.', urgentInsight:'Urgent: 7 din ke andar due tender hai. Documents aur EMD status today check karein.', missedInsight:'Missed tenders dikh rahe hain. Reason capture karke next bid checklist improve karein.', pipelineInsight:'Pipeline strong hai. High-value tender ke liye approval aur pricing review schedule karein.', orderInsight:'Orders pending hain. BG/CRAC follow-up daily tracker me rakhein.'
+  },
+  en: {
+    navFeatures:'Features', navGrowth:'Growth Plan', navPricing:'Pricing', navFaq:'FAQ', login:'Login', signup:'Sign up',
+    badge:'Tender Growth OS for MSMEs', heroTitle:'Manage tenders and orders from one simple growth dashboard', heroText:'TenderEase brings pipeline, due dates, eligibility, order delivery, BG status and business growth analytics into one owner-friendly workspace.', heroCta:'Create free account', heroLogin:'Already a customer? Login',
+    scoreTitle:'Growth Score Preview', pipelineLabel:'Pipeline Value', dueLabel:'Nearest Due', notAdded:'Not added', riskLabel:'Risk Alerts', autoAfterLogin:'Auto after login', scoreHelp:'The dashboard summarizes tender value, bid workload, missed risk and pending orders instantly.',
+    featuresTitle:'Clear modules for business owners', feature1Title:'Tender CRM', feature1Text:'One-screen view of live, upcoming, filed, missed, won and lost tenders.', feature2Title:'Due-date control', feature2Text:'Highlights tenders due within 7 days and missed-risk items.', feature3Title:'Order execution', feature3Text:'Track contract, BG, courier, collection and CRAC in one place.', feature4Title:'Team folders', feature4Text:'Auto folder path for every tender/order so documents stay organized.',
+    growthTitle:'Tender growth playbook', growth1Title:'1. Discover', growth1Text:'Build a pipeline from manual/PDF entries and track opportunities by location and organisation.', growth2Title:'2. Qualify', growth2Text:'Use EMD, tender value, due days and not-applying reasons for faster decisions.', growth3Title:'3. Execute', growth3Text:'Convert won tenders into orders and close BG, delivery and CRAC follow-ups.',
+    workflowTitle:'Simple workflow', wf1Title:'Sign up', wf1Text:'A customer ID is created and your private dashboard opens.', wf2Title:'Add tender', wf2Text:'Add tender number, due date, value, status or upload a PDF.', wf3Title:'View analytics', wf3Text:'Pipeline value, urgent dues, conversion and missed risk are calculated automatically.', wf4Title:'Close orders', wf4Text:'Update every status from contract to CRAC and keep the team aligned.',
+    pricingTitle:'Starter-friendly plans', plan1:'Starter', plan1Text:'Self-managed dashboard and CSV export.', plan2:'Growth', plan2Text:'Team tracking, tender review and weekly pipeline call.', plan3:'Managed', plan3Text:'Tender filing support, order follow-up and document checklist.', faqTitle:'Common questions', faq1Q:'Will this run on Cloudflare?', faq1A:'Yes, static mode works with localStorage fallback.', faq2Q:'Will data sync across devices?', faq2A:'Not in static mode. Backend/database connection is required for sync.',
+    statLive:'Live Tender', statUpcoming:'Upcoming', statFiled:'Total Filed', statMissed:'Missed', statPipeline:'Pipeline Value', statDue:'Nearest Due Days', tabInsights:'Insights', tabTenders:'Tenders', tabOrders:'Orders', downloadTender:'Tender Excel/CSV', downloadOrder:'Order Excel/CSV', insightsTitle:'Action insights', winRateTitle:'Win-rate helper', avgValueTitle:'Average tender value', orderPendingTitle:'Pending order value', addTenderTitle:'Add Tender', addTenderBtn:'Add Tender', pdfLabel:'Add tender from PDF', uploadPdf:'Upload PDF', tenderListTitle:'Tender List', addOrderTitle:'Add Order', addOrderBtn:'Add Order', orderListTitle:'Order List', businessName:'Business Name', ownerName:'Owner Name', phone:'Phone', emptyInsight:'No data yet. Add your first tender to see analytics.', urgentInsight:'Urgent: a tender is due within 7 days. Check documents and EMD today.', missedInsight:'Missed tenders found. Capture reasons and improve the next bid checklist.', pipelineInsight:'Pipeline is strong. Schedule approval and pricing review for high-value tenders.', orderInsight:'Orders are pending. Keep BG/CRAC follow-up in the daily tracker.'
+  }
+};
+let language = localStorage.getItem('language') || 'hi';
+let mode = 'login';
+let customer = JSON.parse(localStorage.getItem('customer') || 'null');
+const STORE_KEY = 'tenderease_static_data';
+
+function setLanguage(next){ language = next; localStorage.setItem('language', next); document.documentElement.lang = next; langHi.classList.toggle('active', next === 'hi'); langEn.classList.toggle('active', next === 'en'); document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.dataset.i18n; if(I18N[next][key]) el.textContent = I18N[next][key]; }); }
+function t(key){ return I18N[language][key] || I18N.en[key] || key; }
+function money(value){ return `₹${Number(value || 0).toLocaleString('en-IN')}`; }
+function getStore(){ return JSON.parse(localStorage.getItem(STORE_KEY) || '{"customers":[],"tenders":[],"orders":[]}'); }
+function saveStore(store){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+function uid(){ return Math.random().toString(16).slice(2, 10).toUpperCase(); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function dueDays(dateValue){ if(!dateValue) return null; const end = new Date(dateValue + 'T00:00:00'); if(Number.isNaN(end.getTime())) return null; const now = new Date(today() + 'T00:00:00'); return Math.ceil((end - now) / 86400000); }
+async function api(path, options){ const res = await fetch(path, options); if(!res.ok) throw new Error((await res.json()).detail || 'API error'); return res.json(); }
+function localRows(type){ return getStore()[type].filter(row => customer && row.customer_id === customer.id); }
+
+setLanguage(language);
+if (customer) enterDashboard();
+
+function openAuth(nextMode){ mode = nextMode; authModal.style.display='flex'; authTitle.textContent = mode === 'signup' ? t('signup') : t('login'); authSubmit.textContent = mode === 'signup' ? t('signup') : t('login'); signupFields.classList.toggle('hidden', mode !== 'signup'); }
+function closeAuth(){ authModal.style.display='none'; authMessage.textContent = ''; }
+async function submitAuth(){
+  const payload = { email: email.value, password: password.value };
+  if(mode === 'signup'){ payload.business_name = business_name.value; payload.owner_name = owner_name.value; payload.phone = phone.value; }
+  try { customer = await api(mode === 'signup' ? '/api/auth/signup' : '/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) {
+    const store = getStore();
+    if(mode === 'signup'){
+      if(store.customers.some(c => c.email === payload.email)){ authMessage.textContent = 'Email already registered'; return; }
+      customer = { id: Date.now(), customer_uid: `CUST-${uid()}`, created_at: new Date().toISOString(), ...payload };
+      store.customers.push(customer); saveStore(store);
+    } else {
+      customer = store.customers.find(c => c.email === payload.email && c.password === payload.password);
+      if(!customer){ authMessage.textContent = 'Invalid email or password'; return; }
+    }
+  }
+  localStorage.setItem('customer', JSON.stringify(customer)); closeAuth(); enterDashboard();
+}
+function enterDashboard(){ landing.classList.add('hidden'); dashboard.classList.remove('hidden'); welcome.textContent = `Welcome, ${customer.business_name} (${customer.customer_uid})`; refreshAll(); }
+function showPanel(panel){ insightsPanel.classList.toggle('hidden', panel !== 'insights'); tendersPanel.classList.toggle('hidden', panel !== 'tenders'); ordersPanel.classList.toggle('hidden', panel !== 'orders'); }
+async function refreshAll(){ await loadStats(); await loadTenders(); await loadOrders(); }
+async function fetchTenders(){ try { return await api(`/api/customers/${customer.id}/tenders`); } catch (err) { return localRows('tenders').map(t => ({...t, due_days: dueDays(t.submission_end_date)})); } }
+async function fetchOrders(){ try { return await api(`/api/customers/${customer.id}/orders`); } catch (err) { return localRows('orders'); } }
+function buildInsights(tenders, orders){
+  const dues = tenders.map(t => dueDays(t.submission_end_date)).filter(v => v !== null);
+  const pipeline = tenders.reduce((sum,t) => sum + Number(t.tender_value || 0), 0);
+  const won = tenders.filter(t => (t.current_status || '').toLowerCase() === 'won').length;
+  const filed = tenders.filter(t => (t.applied || '').toLowerCase() === 'yes').length;
+  const pendingOrders = orders.filter(o => !['closed','delivered'].includes((o.order_status || '').toLowerCase()));
+  const insights = [];
+  if(!tenders.length) insights.push(['risk-medium', t('emptyInsight')]);
+  if(dues.some(d => d >= 0 && d <= 7)) insights.push(['risk-high', t('urgentInsight')]);
+  if(tenders.some(t => (t.current_status || '').toLowerCase() === 'missed')) insights.push(['risk-medium', t('missedInsight')]);
+  if(pipeline > 1000000) insights.push(['risk-good', t('pipelineInsight')]);
+  if(pendingOrders.length) insights.push(['risk-medium', t('orderInsight')]);
+  insightList.innerHTML = insights.map(([cls,msg]) => `<div class="insight ${cls}">${msg}</div>`).join('');
+  winRate.textContent = filed ? `${Math.round((won / filed) * 100)}%` : '0%';
+  avgTenderValue.textContent = money(tenders.length ? pipeline / tenders.length : 0);
+  pendingOrderValue.textContent = money(pendingOrders.reduce((sum,o) => sum + Number(o.total_order_value || 0), 0));
+  pipeline_value.textContent = money(pipeline);
+}
+async function loadStats(){
+  const tenders = await fetchTenders();
+  const orders = await fetchOrders();
+  const dues = tenders.map(t => dueDays(t.submission_end_date)).filter(v => v !== null);
+  const d = {
+    live_tenders: tenders.filter(t => ['live','working'].includes((t.current_status || '').toLowerCase())).length,
+    upcoming_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'upcoming').length,
+    total_filed_tenders: tenders.filter(t => (t.applied || '').toLowerCase() === 'yes').length,
+    missed_tenders: tenders.filter(t => (t.current_status || '').toLowerCase() === 'missed').length,
+    nearest_due_days: dues.length ? Math.min(...dues) : null,
+  };
+  ['live_tenders','upcoming_tenders','total_filed_tenders','missed_tenders','nearest_due_days'].forEach(k => document.getElementById(k).textContent = d[k] ?? '-');
+  buildInsights(tenders, orders);
+}
+async function addTender(){
+  const payload = { tender_number:tender_number.value, tender_title:tender_title.value, published_date:published_date.value, submission_end_date:submission_end_date.value, pre_bid_date:pre_bid_date.value, pre_bid_location:pre_bid_location.value, to_be_applied:to_be_applied.value, applied:applied.value, organisation:organisation.value, location:location.value, emd_value:+emd_value.value||0, tender_value:+tender_value.value||0, quoted_value:+quoted_value.value||0, current_status:current_status.value, tender_link:tender_link.value, remarks:remarks.value, not_applying_reason:remarks.value };
+  try { await api(`/api/customers/${customer.id}/tenders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) { const store = getStore(); store.tenders.push({ id: Date.now(), customer_id: customer.id, due_days: dueDays(payload.submission_end_date), folder_path: `customer_data/${customer.customer_uid}/tenders/${payload.tender_number}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...payload }); saveStore(store); }
+  refreshAll();
+}
+async function uploadPdf(){
+  const file = tender_pdf.files[0]; if(!file) return;
+  const form = new FormData(); form.append('pdf', file);
+  try { await fetch(`/api/customers/${customer.id}/tenders/import-pdf`, {method:'POST', body:form}); }
+  catch (err) { const tenderNumber = file.name.replace(/\.pdf$/i, ''); const store = getStore(); store.tenders.push({ id: Date.now(), customer_id: customer.id, tender_number:tenderNumber, tender_title:`PDF Imported Tender - ${tenderNumber}`, current_status:'Review', applied:'No', to_be_applied:'Review', due_days:null, folder_path:`customer_data/${customer.customer_uid}/tenders/${tenderNumber}`, created_at:new Date().toISOString(), updated_at:new Date().toISOString() }); saveStore(store); }
+  refreshAll();
+}
+async function loadTenders(){ const rows = await fetchTenders(); tenderTable.querySelector('tbody').innerHTML = rows.map((t,i)=>`<tr><td>${i+1}</td><td>${t.remarks||''}</td><td>${t.published_date||''}</td><td>${t.submission_end_date||''}</td><td>${t.pre_bid_date||''}</td><td>${t.to_be_applied}</td><td>${t.applied}</td><td>${t.due_days ?? ''}</td><td>${t.tender_number}</td><td>${t.tender_title}</td><td>${t.organisation||''}</td><td>${t.location||''}</td><td>${t.emd_value||0}</td><td>${t.tender_value||0}</td><td>${t.quoted_value||0}</td><td>${t.current_status}</td><td class="folder">${t.folder_path||''}</td></tr>`).join(''); }
+async function addOrder(){
+  const payload = { gem_tender_reference:gem_tender_reference.value, tech_specs_reference:tech_specs_reference.value, category:category.value, contract_no:contract_no.value, contract_date:contract_date.value, organisation:order_organisation.value, location:order_location.value, total_order_value:+total_order_value.value||0, order_status:order_status.value, bg_value:+bg_value.value||0, bg_number:bg_number.value, bg_issue_date:bg_issue_date.value, bg_timeline:bg_timeline.value, bg_status:bg_status.value, collected_or_not:collected_or_not.value, couriered:couriered.value, crac_link:crac_link.value, work:work.value };
+  try { await api(`/api/customers/${customer.id}/orders`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); }
+  catch (err) { const store = getStore(); store.orders.push({ id: Date.now(), customer_id: customer.id, folder_path:`customer_data/${customer.customer_uid}/orders/${payload.gem_tender_reference}`, created_at:new Date().toISOString(), updated_at:new Date().toISOString(), ...payload }); saveStore(store); }
+  refreshAll();
+}
+async function loadOrders(){ const rows = await fetchOrders(); orderTable.querySelector('tbody').innerHTML = rows.map((o,i)=>`<tr><td>${i+1}</td><td>${o.gem_tender_reference}</td><td>${o.category||''}</td><td>${o.contract_no||''}</td><td>${o.contract_date||''}</td><td>${o.organisation||''}</td><td>${o.work||''}</td><td>${o.total_order_value}</td><td>${o.order_status}</td><td>${o.bg_number||''}</td><td>${o.collected_or_not}</td><td>${o.couriered}</td><td>${o.crac_link||''}</td><td class="folder">${o.folder_path||''}</td></tr>`).join(''); }
+function downloadCsv(filename, rows){ if(!rows.length) return; const columns = Object.keys(rows[0]); const csv = [columns.join(','), ...rows.map(row => columns.map(col => `"${String(row[col] ?? '').replaceAll('"','""')}"`).join(','))].join('\n'); const url = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
+function downloadTenderSheet(){ if(location.hostname && !location.hostname.includes('localhost')) return downloadCsv('tender-dashboard.csv', localRows('tenders')); window.open(`/api/customers/${customer.id}/tenders/export`, '_blank'); }
+function downloadOrderSheet(){ if(location.hostname && !location.hostname.includes('localhost')) return downloadCsv('orders-dashboard.csv', localRows('orders')); window.open(`/api/customers/${customer.id}/orders/export`, '_blank'); }
+</script>
+</body>
+</html>
